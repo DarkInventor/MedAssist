@@ -60,141 +60,147 @@ export default function AllPostsClient({ blogPosts }: AllPostsClientProps) {
 
   return (
     <div className="min-h-screen bg-white">
-      {/* Fixed Sidebar */}
-      <div className="fixed left-0 top-40 w-64 h-screen bg-white z-10">
-        <div className="flex flex-col h-full">
-          {/* Logo/Header Space */}
-          {/* <div className="h-20 flex items-center justify-center border-b border-gray-100">
-            <h2 className="text-lg font-semibold text-gray-900">Categories</h2>
-          </div> */}
+      {/* Header */}
+      <div className="max-w-7xl mx-auto px-4 py-12">
+        <div className="text-center mb-12">
+          <h1 className="text-5xl font-bold text-gray-900 mb-8">Blog</h1>
           
-          {/* Navigation Menu */}
-          <div className="flex-1 p-6 py-20">
-            <nav className="space-y-1">
-              {categoriesWithCounts.map((category) => (
-                <button
-                  key={category.slug}
-                  onClick={() => setSelectedCategory(category.slug)}
-                  className={`group w-full text-left px-3 py-2 text-sm font-medium transition-colors rounded-lg flex items-center justify-between ${
-                    selectedCategory === category.slug
-                      ? 'bg-gray-100 text-gray-900'
-                      : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900'
-                  }`}
-                >
-                  <span>{category.name}</span>
-                  <svg 
-                    className="w-4 h-4 opacity-0 group-hover:opacity-100 transition-opacity" 
-                    fill="none" 
-                    stroke="currentColor" 
-                    viewBox="0 0 24 24"
-                  >
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                  </svg>
-                </button>
-              ))}
-            </nav>
+          {/* Category Tabs */}
+          <div className="flex items-center justify-center gap-8 mb-12">
+            {categoriesWithCounts.map((category) => (
+              <button
+                key={category.slug}
+                onClick={() => setSelectedCategory(category.slug)}
+                className={`text-sm font-medium transition-colors pb-2 border-b-2 ${
+                  selectedCategory === category.slug
+                    ? 'text-gray-900 border-gray-900'
+                    : 'text-gray-500 border-transparent hover:text-gray-700'
+                }`}
+              >
+                {category.name}
+              </button>
+            ))}
           </div>
         </div>
-      </div>
 
-      {/* Main Content Area with Left Margin */}
-      <div className="ml-64">
-        <div className="p-8">
-          {/* Header */}
-          <div className="mb-12">
-            <div className="flex items-center gap-2 text-sm text-gray-600 mb-4">
-              <Link href="/blog" className="hover:text-blue-600">Blog</Link>
-              <span>•</span>
-              <span className="text-gray-900">All Articles</span>
+        {/* Articles Grid */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          {/* Main Featured Article */}
+          {filteredPosts.length > 0 && (
+            <div className="lg:col-span-2">
+              <article className="group">
+                <Link href={`/blog/${filteredPosts[0].slug}`} className="block">
+                  {/* Large Gradient Hero */}
+                  <div 
+                    className="aspect-[16/9] rounded-2xl mb-6 flex items-center justify-center"
+                    style={{ background: gradients[0] }}
+                  >
+                    <div className="w-16 h-16 bg-white/20 rounded-xl flex items-center justify-center">
+                      <svg className="w-8 h-8 text-white" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M8 5v14l11-7z"/>
+                      </svg>
+                    </div>
+                  </div>
+                  
+                  <h2 className="text-3xl font-bold text-gray-900 group-hover:text-blue-600 transition-colors mb-4 leading-tight">
+                    {filteredPosts[0].title}
+                  </h2>
+                  
+                  <div className="flex items-center gap-3 text-sm text-gray-600 mb-4">
+                    <span className="font-medium">{filteredPosts[0].category}</span>
+                    <span>{filteredPosts[0].date}</span>
+                  </div>
+                  
+                  <p className="text-gray-600 leading-relaxed">
+                    {filteredPosts[0].excerpt}
+                  </p>
+                </Link>
+              </article>
             </div>
-            <h1 className="text-3xl font-bold text-gray-900 mb-4">
-              {selectedCategory === 'all' ? 'All Articles' : categoriesWithCounts.find(c => c.slug === selectedCategory)?.name}
-            </h1>
-            <p className="text-gray-600">
-              {selectedCategory === 'all' 
-                ? `Browse our complete collection of ${blogPosts.length} articles on AI in healthcare`
-                : `${filteredPosts.length} article${filteredPosts.length !== 1 ? 's' : ''} about ${categoriesWithCounts.find(c => c.slug === selectedCategory)?.name.toLowerCase()}`
-              }
-            </p>
-          </div>
+          )}
 
-          {/* Articles Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-16">
-            {filteredPosts.map((post, index) => (
+          {/* Side Articles */}
+          <div className="space-y-8">
+            {filteredPosts.slice(1, 4).map((post, index) => (
               <article key={post.slug} className="group">
                 <Link href={`/blog/${post.slug}`} className="block">
-                  {/* Gradient Thumbnail */}
-                  <div 
-                    className="aspect-[4/3] rounded-xl mb-4"
-                    style={{ background: gradients[index % gradients.length] }}
-                  />
-                  
-                  {/* Post Content */}
-                  <div>
-                    <div className="flex items-center gap-2 mb-2">
-                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
-                        {post.category}
-                      </span>
-                      <span className="text-sm text-gray-500">{post.date}</span>
-                    </div>
+                  <div className="flex gap-4">
+                    {/* Small Gradient Thumbnail */}
+                    <div 
+                      className="w-24 h-24 rounded-xl flex-shrink-0"
+                      style={{ background: gradients[(index + 1) % gradients.length] }}
+                    />
                     
-                    <h3 className="text-lg font-semibold text-gray-900 group-hover:text-blue-600 transition-colors line-clamp-2 mb-2">
-                      {post.title}
-                    </h3>
-                    
-                    <p className="text-gray-600 text-sm line-clamp-3 leading-relaxed mb-3">
-                      {post.excerpt}
-                    </p>
-                    
-                    <div className="flex items-center gap-2 text-sm text-gray-500">
-                      <span>{post.author}</span>
-                      <span>•</span>
-                      <span>{post.readTime}</span>
+                    <div className="flex-1 min-w-0">
+                      <h3 className="text-lg font-semibold text-gray-900 group-hover:text-blue-600 transition-colors line-clamp-2 mb-2">
+                        {post.title}
+                      </h3>
+                      
+                      <div className="flex items-center gap-2 text-sm text-gray-600 mb-2">
+                        <span className="font-medium">{post.category}</span>
+                        <span>{post.date}</span>
+                      </div>
+                      
+                      <p className="text-gray-600 text-sm line-clamp-2">
+                        {post.excerpt}
+                      </p>
                     </div>
                   </div>
                 </Link>
               </article>
             ))}
           </div>
+        </div>
 
-          {/* Empty State */}
-          {filteredPosts.length === 0 && (
-            <div className="text-center py-12">
-              <div className="text-gray-400 text-6xl mb-4">📝</div>
-              <h3 className="text-xl font-semibold text-gray-900 mb-2">No articles found</h3>
-              <p className="text-gray-600">We're working on new content for this category.</p>
+        {/* More Articles Section */}
+        {filteredPosts.length > 4 && (
+          <div className="mt-16">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+              {filteredPosts.slice(4).map((post, index) => (
+                <article key={post.slug} className="group">
+                  <Link href={`/blog/${post.slug}`} className="block">
+                    {/* Gradient Thumbnail */}
+                    <div 
+                      className="aspect-[4/3] rounded-xl mb-4"
+                      style={{ background: gradients[(index + 4) % gradients.length] }}
+                    />
+                    
+                    <h3 className="text-lg font-semibold text-gray-900 group-hover:text-blue-600 transition-colors line-clamp-2 mb-2">
+                      {post.title}
+                    </h3>
+                    
+                    <div className="flex items-center gap-2 text-sm text-gray-600 mb-2">
+                      <span className="font-medium">{post.category}</span>
+                      <span>{post.date}</span>
+                    </div>
+                    
+                    <p className="text-gray-600 text-sm line-clamp-3">
+                      {post.excerpt}
+                    </p>
+                  </Link>
+                </article>
+              ))}
             </div>
-          )}
-
-          {/* Back to Blog */}
-          <div className="text-center mb-16">
-            <Link 
-              href="/blog"
-              className="bg-gray-100 text-gray-700 px-8 py-3 rounded-xl font-medium hover:bg-gray-200 transition-colors"
-            >
-              ← Back to Blog Home
-            </Link>
           </div>
+        )}
 
-          {/* Newsletter Signup */}
-          <section className="bg-gradient-to-r from-blue-50 to-purple-50 border border-gray-200 rounded-2xl p-8 text-center">
-            <h3 className="text-2xl font-bold text-gray-900 mb-4">
-              Never Miss an Article
-            </h3>
-            <p className="text-gray-600 mb-6 max-w-2xl mx-auto">
-              Get notified when we publish new articles on AI in healthcare, compliance updates, and medical technology.
-            </p>
-            <div className="flex flex-col sm:flex-row gap-4 max-w-md mx-auto">
-              <input 
-                type="email" 
-                placeholder="Enter your email"
-                className="flex-1 px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              />
-              <button className="bg-blue-600 text-white px-6 py-3 rounded-xl font-medium hover:bg-blue-700 transition-colors">
-                Subscribe
-              </button>
-            </div>
-          </section>
+        {/* Empty State */}
+        {filteredPosts.length === 0 && (
+          <div className="text-center py-12">
+            {/* <div className="text-gray-400 text-6xl mb-4">📝</div> */}
+            <h3 className="text-xl font-semibold text-gray-900 mb-2">No articles found</h3>
+            <p className="text-gray-600">We're working on new content for this category.</p>
+          </div>
+        )}
+
+        {/* Back to Blog */}
+        <div className="text-center mt-16">
+          <Link 
+            href="/blog"
+            className="bg-gray-100 text-gray-700 px-8 py-3 rounded-xl font-medium hover:bg-gray-200 transition-colors"
+          >
+            ← Back to Blog Home
+          </Link>
         </div>
       </div>
     </div>
