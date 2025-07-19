@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import './globals.css'
 import { MobileWrapper } from '../components/mobile-wrapper'
+import { AuthProvider } from '../contexts/AuthContext'
 
 export const metadata: Metadata = {
   title: 'MedAssist - AI Medical Assistant for Canadian Physicians | PHIPA Compliant',
@@ -192,9 +193,11 @@ export default function RootLayout({
         />
       </head>
       <body>
-        <MobileWrapper>
-          {children}
-        </MobileWrapper>
+        <AuthProvider>
+          <MobileWrapper>
+            {children}
+          </MobileWrapper>
+        </AuthProvider>
       </body>
     </html>
   )

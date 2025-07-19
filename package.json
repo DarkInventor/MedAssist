@@ -3,7 +3,16 @@
   "version": "1.0.0",
   "private": true,
   "description": "AI-powered clinical assistant for Canadian physicians with PHIPA/PIPEDA compliance",
-  "keywords": ["ai", "medical", "assistant", "healthcare", "phipa", "pipeda", "canada", "clinical"],
+  "keywords": [
+    "ai",
+    "medical",
+    "assistant",
+    "healthcare",
+    "phipa",
+    "pipeda",
+    "canada",
+    "clinical"
+  ],
   "author": "MedAssist",
   "homepage": "https://medassist.ca",
   "scripts": {
@@ -48,6 +57,7 @@
     "cmdk": "1.0.4",
     "date-fns": "4.1.0",
     "embla-carousel-react": "8.5.1",
+    "firebase": "^12.0.0",
     "framer-motion": "^12.23.6",
     "input-otp": "1.4.1",
     "lucide-react": "^0.454.0",
