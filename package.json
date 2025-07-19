@@ -1,12 +1,17 @@
 {
-  "name": "my-v0-project",
-  "version": "0.1.0",
+  "name": "medassist",
+  "version": "1.0.0",
   "private": true,
+  "description": "AI-powered clinical assistant for Canadian physicians with PHIPA/PIPEDA compliance",
+  "keywords": ["ai", "medical", "assistant", "healthcare", "phipa", "pipeda", "canada", "clinical"],
+  "author": "MedAssist",
+  "homepage": "https://medassist.ca",
   "scripts": {
     "build": "next build",
     "dev": "next dev",
     "lint": "next lint",
-    "start": "next start"
+    "start": "next start",
+    "sitemap": "next-sitemap"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.1",
@@ -47,6 +52,7 @@
     "input-otp": "1.4.1",
     "lucide-react": "^0.454.0",
     "next": "15.2.4",
+    "next-sitemap": "^4.2.3",
     "next-themes": "^0.4.4",
     "react": "^19",
     "react-day-picker": "8.10.1",
@@ -57,15 +63,16 @@
     "sonner": "^1.7.1",
     "tailwind-merge": "^2.5.5",
     "tailwindcss-animate": "^1.0.7",
-    "vaul": "^0.9.6",
-    "zod": "^3.24.1"
+    "vaul": "^0.9.6"
   },
   "devDependencies": {
-    "@types/node": "^22",
-    "@types/react": "^19",
-    "@types/react-dom": "^19",
-    "postcss": "^8.5",
-    "tailwindcss": "^3.4.17",
+    "@types/node": "^20",
+    "@types/react": "^18",
+    "@types/react-dom": "^18",
+    "eslint": "^8",
+    "eslint-config-next": "15.2.4",
+    "postcss": "^8",
+    "tailwindcss": "^3.4.1",
     "typescript": "^5"
   }
 }
