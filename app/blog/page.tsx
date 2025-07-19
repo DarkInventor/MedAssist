@@ -4,193 +4,154 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { blogPosts } from './blog-data'
 
+const categories = [
+  { name: 'All', slug: 'all', count: blogPosts.length },
+  { name: 'Clinic Technology', slug: 'clinic-technology', count: blogPosts.filter(p => p.category === 'Clinic Technology').length },
+  { name: 'Documentation', slug: 'documentation', count: blogPosts.filter(p => p.category === 'Documentation').length },
+  { name: 'Business Analysis', slug: 'business-analysis', count: blogPosts.filter(p => p.category === 'Business Analysis').length },
+  { name: 'AI Integration', slug: 'ai-integration', count: blogPosts.filter(p => p.category === 'AI Integration').length },
+  { name: 'Patient Care', slug: 'patient-care', count: blogPosts.filter(p => p.category === 'Patient Care').length },
+  { name: 'Compliance', slug: 'compliance', count: blogPosts.filter(p => p.category === 'Compliance').length },
+  { name: 'Product Updates', slug: 'product-updates', count: blogPosts.filter(p => p.category === 'Product Updates').length }
+]
+
+// CSS gradients like OpenAI
+const gradients = [
+  'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+  'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
+  'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
+  'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)',
+  'linear-gradient(135deg, #fa709a 0%, #fee140 100%)',
+  'linear-gradient(135deg, #30cfd0 0%, #91a7ff 100%)',
+  'linear-gradient(135deg, #a8edea 0%, #fed6e3 100%)',
+  'linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%)',
+  'linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%)',
+  'linear-gradient(135deg, #ff8a80 0%, #ea4c89 100%)',
+  'linear-gradient(135deg, #8fd3f4 0%, #84fab0 100%)',
+  'linear-gradient(135deg, #d299c2 0%, #fef9d7 100%)'
+]
+
 export default function BlogIndex() {
-  const [selectedCategory, setSelectedCategory] = useState('All')
-  const [searchTerm, setSearchTerm] = useState('')
+  const [selectedCategory, setSelectedCategory] = useState('all')
   const [filteredPosts, setFilteredPosts] = useState(blogPosts)
 
-  // Get unique categories
-  const categories = Array.from(new Set(blogPosts.map(post => post.category)))
-  const allCategories = ['All', ...categories]
-
-  // Filter posts based on category and search
   useEffect(() => {
-    let filtered = blogPosts
-
-    // Filter by category
-    if (selectedCategory !== 'All') {
-      filtered = filtered.filter(post => post.category === selectedCategory)
+    if (selectedCategory === 'all') {
+      setFilteredPosts(blogPosts)
+    } else {
+      const category = categories.find(c => c.slug === selectedCategory)
+      if (category) {
+        setFilteredPosts(blogPosts.filter(post => post.category === category.name))
+      }
     }
-
-    // Filter by search term
-    if (searchTerm) {
-      const searchLower = searchTerm.toLowerCase()
-      filtered = filtered.filter(post => 
-        post.title.toLowerCase().includes(searchLower) ||
-        post.excerpt.toLowerCase().includes(searchLower) ||
-        post.author.toLowerCase().includes(searchLower) ||
-        post.tags.some(tag => tag.toLowerCase().includes(searchLower))
-      )
-    }
-
-    setFilteredPosts(filtered)
-  }, [selectedCategory, searchTerm])
+  }, [selectedCategory])
 
   return (
-    <div className="min-h-screen bg-white">
-      {/* Header */}
-      <header className="bg-white border-b border-gray-100">
-        <div className="max-w-7xl mx-auto px-4 py-8">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900">Blog</h1>
-              <p className="text-gray-600 mt-1">Latest insights on AI in healthcare</p>
-            </div>
-            <div className="flex items-center gap-4">
-              {/* Search */}
-              <div className="relative">
-                <input
-                  type="text"
-                  placeholder="Search articles..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-64 px-4 py-2 pl-10 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                />
+    <div className="flex bg-white">
+      {/* Sidebar */}
+      <div className="w-64 bg-white border-gray-100 flex flex-col pb-40">
+        <div className="flex-1 flex flex-col justify-center mb-20 p-6">
+         
+          {/* Navigation Menu */}
+          <nav className="space-y-1">
+            {categories.map((category) => (
+              <button
+                key={category.slug}
+                onClick={() => setSelectedCategory(category.slug)}
+                className={`group w-full text-left px-3 py-2 text-sm font-medium transition-colors rounded-lg flex items-center justify-between ${
+                  selectedCategory === category.slug
+                    ? 'bg-gray-100 text-gray-900'
+                    : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900'
+                }`}
+              >
+                <span>{category.name}</span>
                 <svg 
-                  className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" 
+                  className="w-4 h-4 opacity-0 group-hover:opacity-100 transition-opacity" 
                   fill="none" 
                   stroke="currentColor" 
                   viewBox="0 0 24 24"
                 >
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                 </svg>
-              </div>
-            </div>
-          </div>
+              </button>
+            ))}
+          </nav>
         </div>
-      </header>
+      </div>
 
-      <div className="max-w-7xl mx-auto px-4 py-8">
-        <div className="flex gap-8">
-          {/* Left Sidebar - Categories */}
-          <div className="w-64 flex-shrink-0">
-            <div className="sticky top-24">
-              <h2 className="text-lg font-semibold text-gray-900 mb-4">Categories</h2>
-              <nav className="space-y-1">
-                {allCategories.map((category) => {
-                  const categoryPosts = category === 'All' 
-                    ? blogPosts 
-                    : blogPosts.filter(post => post.category === category)
-                  
-                  return (
-                    <button
-                      key={category}
-                      onClick={() => setSelectedCategory(category)}
-                      className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-colors ${
-                        selectedCategory === category
-                          ? 'bg-blue-50 text-blue-700 font-medium'
-                          : 'text-gray-700 hover:bg-gray-50'
-                      }`}
-                    >
-                      <div className="flex items-center justify-between">
-                        <span>{category}</span>
-                        <span className="text-xs text-gray-400 bg-gray-100 px-2 py-1 rounded-full">
-                          {categoryPosts.length}
-                        </span>
-                      </div>
-                    </button>
-                  )
-                })}
-              </nav>
-            </div>
+      {/* Main Content Area */}
+      <div className="flex-1 max-w-[72%] mx-auto">
+        {/* Blog Posts Grid */}
+        <div className="p-8">
+          <div className="flex items-center justify-between mb-8">
+            <h2 className="text-xl font-semibold text-gray-900">Latest news</h2>
+            <Link href="/blog/all" className="text-sm text-gray-600 hover:text-gray-900">
+              View all
+            </Link>
           </div>
 
-          {/* Main Content */}
-          <div className="flex-1">
-            {/* Results Header */}
-            <div className="flex items-center justify-between mb-8">
-              <div>
-                <h2 className="text-2xl font-bold text-gray-900">
-                  {selectedCategory === 'All' ? 'Latest articles' : selectedCategory}
-                </h2>
-                <p className="text-gray-600 mt-1">
-                  {filteredPosts.length} article{filteredPosts.length !== 1 ? 's' : ''} found
-                </p>
-              </div>
-              {selectedCategory !== 'All' && (
-                <button
-                  onClick={() => setSelectedCategory('All')}
-                  className="text-blue-600 hover:text-blue-700 text-sm font-medium"
-                >
-                  View all
-                </button>
-              )}
-            </div>
-
-            {/* Articles Grid */}
-            {filteredPosts.length === 0 ? (
-              <div className="text-center py-12">
-                <p className="text-gray-500 text-lg">No articles found matching your criteria.</p>
-                <button 
-                  onClick={() => {
-                    setSelectedCategory('All')
-                    setSearchTerm('')
-                  }}
-                  className="mt-4 text-blue-600 hover:text-blue-700"
-                >
-                  Clear filters
-                </button>
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                {filteredPosts.map((post) => (
-                  <article key={post.slug} className="group">
-                    {/* Article Image Placeholder */}
-                    <div className="w-full h-48 bg-gradient-to-br from-blue-100 to-purple-100 rounded-lg mb-4 flex items-center justify-center">
-                      <div className="text-4xl opacity-50">
-                        {post.category === 'Clinic Technology' && '🏥'}
-                        {post.category === 'Documentation' && '📋'}
-                        {post.category === 'Business Analysis' && '📊'}
-                        {post.category === 'Practice Management' && '⚙️'}
-                        {post.category === 'Healthcare Innovation' && '🚀'}
-                        {post.category === 'Patient Care' && '👥'}
-                        {post.category === 'Research & Evidence' && '🔬'}
-                        {post.category === 'Compliance' && '🔒'}
-                        {post.category === 'Physician Wellness' && '💚'}
-                        {post.category === 'Technology Integration' && '🔗'}
-                        {post.category === 'Technology' && '💻'}
-                        {post.category === 'Digital Transformation' && '🔄'}
-                      </div>
-                    </div>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {filteredPosts.slice(0, 6).map((post, index) => (
+              <article key={post.slug} className="group">
+                <Link href={`/blog/${post.slug}`} className="block">
+                  <div className="flex gap-4">
+                    {/* Gradient Thumbnail */}
+                    <div 
+                      className="w-24 h-24 rounded-lg flex-shrink-0"
+                      style={{ background: gradients[index % gradients.length] }}
+                    />
                     
-                    {/* Article Content */}
-                    <div>
-                      <div className="flex items-center gap-2 mb-2">
-                        <span className="text-xs font-medium text-gray-600 bg-gray-100 px-2 py-1 rounded">
-                          {post.category}
-                        </span>
-                        <span className="text-xs text-gray-500">{post.readTime}</span>
-                      </div>
-                      
-                      <h3 className="text-lg font-semibold text-gray-900 mb-2 group-hover:text-blue-600 transition-colors">
-                        <Link href={`/blog/${post.slug}`}>
-                          {post.title}
-                        </Link>
+                    {/* Post Content */}
+                    <div className="flex-1 min-w-0">
+                      <h3 className="text-lg font-semibold text-gray-900 group-hover:text-blue-600 transition-colors line-clamp-2 mb-2">
+                        {post.title}
                       </h3>
                       
-                      <p className="text-gray-600 text-sm mb-3 line-clamp-2">
-                        {post.excerpt}
-                      </p>
-                      
-                      <div className="flex items-center justify-between text-xs text-gray-500">
-                        <span>{post.author}</span>
+                      <div className="flex items-center gap-2 text-sm text-gray-600">
+                        <span>{post.category}</span>
                         <span>{post.date}</span>
                       </div>
                     </div>
-                  </article>
-                ))}
-              </div>
-            )}
+                  </div>
+                </Link>
+              </article>
+            ))}
+          </div>
+
+          {/* Stories Section */}
+          <div className="mt-16">
+            <div className="flex items-center justify-between mb-8">
+              <h2 className="text-xl font-semibold text-gray-900">Stories</h2>
+              <Link href="/blog/stories" className="text-sm text-gray-600 hover:text-gray-900">
+                View all
+              </Link>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {filteredPosts.slice(6, 9).map((post, index) => (
+                <article key={post.slug} className="group">
+                  <Link href={`/blog/${post.slug}`} className="block">
+                    {/* Large Gradient Thumbnail */}
+                    <div 
+                      className="aspect-[4/3] rounded-xl mb-4"
+                      style={{ background: gradients[(index + 6) % gradients.length] }}
+                    />
+                    
+                    {/* Post Content */}
+                    <div>
+                      <h3 className="text-lg font-semibold text-gray-900 group-hover:text-blue-600 transition-colors line-clamp-2 mb-2">
+                        {post.title}
+                      </h3>
+                      
+                      <div className="flex items-center gap-2 text-sm text-gray-600">
+                        <span>{post.category}</span>
+                        <span>{post.date}</span>
+                      </div>
+                    </div>
+                  </Link>
+                </article>
+              ))}
+            </div>
           </div>
         </div>
       </div>

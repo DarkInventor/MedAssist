@@ -192,7 +192,6 @@ export default function RootLayout({
         />
       </head>
       <body>
-        <Navigation />
         {children}
       </body>
     </html>
