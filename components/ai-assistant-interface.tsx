@@ -101,7 +101,7 @@ export function AIAssistantInterface() {
               placeholder="Ask me anything..."
               value={inputValue}
               onChange={(e) => setInputValue(e.target.value)}
-              className="w-full text-gray-700 text-base outline-none placeholder:text-gray-400 bg-transparent"
+              className="w-full text-gray-700 text-base outline-none focus:outline-none focus:ring-0 placeholder:text-gray-400 bg-transparent"
             />
           </div>
 
