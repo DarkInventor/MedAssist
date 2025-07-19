@@ -241,24 +241,24 @@ function AppSidebar({
   return (
     <Sidebar variant="inset">
       <SidebarHeader className="p-4">
-        <div className="flex items-center space-x-3">
-          <div className="w-8 h-8 bg-gray-900 rounded-2xl flex items-center justify-center">
-            <Search className="w-4 h-4 text-white" />
+        <div className="flex items-center space-x-0">
+          <div className="w-34 h-24 rounded-2xl flex items-center justify-center overflow-hidden -p-100">
+            <img src="/logo.png" alt="MedAssist" className="w-30 h-30 object-contain" />
           </div>
-          <div>
+          {/* <div>
             <h1 className="text-lg font-semibold text-gray-900">
               MedAssist
             </h1>
             <p className="text-xs text-gray-500">Clinical AI</p>
-          </div>
+          </div> */}
         </div>
       </SidebarHeader>
 
       <SidebarContent>
-        <div className="px-4 pb-4 py-2">
+        <div className="px-4 pb-8 py-0">
           <Button
             variant="outline"
-            className="w-full justify-start text-gray-700 border-gray-300 hover:bg-gray-100 rounded-2xl"
+            className="w-full justify-start text-gray-700 border-gray-300 hover:bg-gray-100 rounded-2xl focus:outline-none focus:ring-0"
             onClick={onNewQuery}
           >
             <Plus className="w-4 h-4 mr-2" />
