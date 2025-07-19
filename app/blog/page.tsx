@@ -1,7 +1,6 @@
 import { Metadata } from 'next'
 import Link from 'next/link'
 import { blogPosts } from './blog-data'
-import BlogFilter from '@/components/blog-filter'
 
 export const metadata: Metadata = {
   title: 'Blog - MedAssist | AI Healthcare Insights for Canadian Physicians',
@@ -13,7 +12,9 @@ export const metadata: Metadata = {
     url: 'https://medassist.ai/blog',
     images: [{ url: '/og-blog.jpg', width: 1200, height: 630 }],
   },
-  canonical: 'https://medassist.ai/blog'
+  alternates: {
+    canonical: 'https://medassist.ai/blog'
+  }
 }
 
 export default function BlogIndex() {
@@ -24,123 +25,68 @@ export default function BlogIndex() {
   return (
     <div className="min-h-screen bg-white">
       {/* Header */}
-      <header className="bg-white border-b border-gray-100">
-        <div className="max-w-6xl mx-auto px-4 py-16">
+      <header className="bg-white">
+        <div className="max-w-4xl mx-auto px-6 mt-20">
           <div className="text-center">
-            <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
-              MedAssist Blog
+            <h1 className="text-5xl md:text-6xl font-bold text-gray-900 mb-6 tracking-tight">
+              Blog
             </h1>
-            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+            <p className="text-xl text-gray-600 max-w-2xl mx-auto leading-relaxed">
               Expert insights on AI in healthcare, clinic automation, and the future of medical technology in Canada
             </p>
           </div>
         </div>
       </header>
 
-      <div className="max-w-6xl mx-auto px-4 py-12">
+      <div className="max-w-4xl mx-auto px-6 py-20">
         {/* Featured Post */}
-        <section className="mb-16">
-          <div className="bg-gray-50 border border-gray-200 rounded-2xl overflow-hidden" style={{borderRadius: '1rem'}}>
-            <div className="p-8 md:p-12">
-              <div className="flex items-center gap-3 mb-4">
-                <span className="bg-blue-50 text-blue-900 px-3 py-1 rounded-full text-sm font-medium">
-                  Featured
-                </span>
-                <span className="text-gray-500 text-sm">
-                  {featuredPost.category}
-                </span>
-              </div>
-              <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
-                {featuredPost.title}
-              </h2>
-              <p className="text-lg text-gray-600 mb-6 max-w-3xl">
-                {featuredPost.excerpt}
-              </p>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-4">
-                  <span className="text-gray-600 text-sm">{featuredPost.author}</span>
-                  <span className="text-gray-400">•</span>
-                  <span className="text-gray-600 text-sm">{featuredPost.date}</span>
-                  <span className="text-gray-400">•</span>
-                  <span className="text-gray-600 text-sm">{featuredPost.readTime}</span>
-                </div>
-                <Link 
-                  href={`/blog/${featuredPost.slug}`}
-                  className="bg-blue-600 text-white px-6 py-3 font-medium hover:bg-blue-700 transition-colors"
-                  style={{borderRadius: '1rem'}}
-                >
-                  Read Article
-                </Link>
-              </div>
-            </div>
-          </div>
-        </section>
+       
 
-        {/* Filter Component */}
-        <BlogFilter categories={categories} />
-
-        {/* Recent Posts Grid */}
-        <section>
-          <h3 className="text-2xl font-bold text-gray-900 mb-8">Recent Posts</h3>
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+        {/* Recent Posts */}
+        <section className="mb-20">
+          <div className="space-y-12">
             {recentPosts.map((post) => (
-              <article key={post.slug} className="bg-white border border-gray-200 overflow-hidden hover:border-gray-300 transition-colors" style={{borderRadius: '1rem'}}>
-                <div className="p-6">
-                  <div className="flex items-center gap-2 mb-3">
-                    <span className="bg-gray-100 text-gray-700 px-2 py-1 rounded text-xs font-medium">
-                      {post.category}
-                    </span>
-                    {post.tags.slice(0, 2).map(tag => (
-                      <span key={tag} className="text-gray-500 text-xs">
-                        #{tag}
-                      </span>
-                    ))}
-                  </div>
-                  <h4 className="text-xl font-semibold text-gray-900 mb-3 line-clamp-2">
+              <article key={post.slug} className="border-b border-gray-100 pb-12 last:border-b-0">
+                <div className="mb-4">
+                  <span className="text-blue-600 text-sm font-medium">
+                    {post.category}
+                  </span> 
+                </div>
+                <h3 className="text-2xl md:text-3xl font-bold text-gray-900 mb-4 leading-tight">
+                  <Link href={`/blog/${post.slug}`} className="hover:text-gray-700 transition-colors">
                     {post.title}
-                  </h4>
-                  <p className="text-gray-600 mb-4 line-clamp-3">
-                    {post.excerpt}
-                  </p>
-                  <div className="flex items-center justify-between text-sm text-gray-500 mb-4">
-                    <span>{post.author}</span>
-                    <span>{post.date}</span>
-                  </div>
-                  <Link 
-                    href={`/blog/${post.slug}`}
-                    className="text-blue-600 font-medium hover:text-blue-700 transition-colors"
-                  >
-                    Read more →
                   </Link>
+                </h3>
+                <p className="text-lg text-gray-600 mb-6 leading-relaxed">
+                  {post.excerpt}
+                </p>
+                <div className="flex items-center gap-4 text-sm text-gray-500">
+                  <span>{post.author}</span>
+                  <span>•</span>
+                  <span>{post.date}</span>
+                  <span>•</span>
+                  <span>{post.readTime}</span>
                 </div>
               </article>
             ))}
           </div>
         </section>
 
-        {/* Load More */}
-        <div className="text-center mt-12">
-          <button className="bg-gray-100 text-gray-700 px-8 py-3 font-medium hover:bg-gray-200 transition-colors" style={{borderRadius: '1rem'}}>
-            Load More Posts
-          </button>
-        </div>
-
         {/* Newsletter Signup */}
-        <section className="mt-20 bg-gray-50 border border-gray-200 p-8 md:p-12 text-center" style={{borderRadius: '1rem'}}>
+        <section className="mt-20 pt-12 border-t border-gray-100 text-center">
           <h3 className="text-2xl font-bold text-gray-900 mb-4">
-            Stay Updated with MedAssist
+            Stay Updated
           </h3>
-          <p className="text-gray-600 mb-6 max-w-2xl mx-auto">
-            Get the latest insights on AI in healthcare, product updates, and exclusive content delivered to your inbox.
+          <p className="text-gray-600 mb-8 max-w-lg mx-auto">
+            Get the latest insights on AI in healthcare delivered to your inbox.
           </p>
-          <div className="flex flex-col sm:flex-row gap-4 max-w-md mx-auto">
+          <div className="flex flex-col sm:flex-row gap-4 max-w-sm mx-auto">
             <input 
               type="email" 
               placeholder="Enter your email"
-              className="flex-1 px-4 py-3 border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              style={{borderRadius: '1rem'}}
+              className="flex-1 px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             />
-            <button className="bg-blue-600 text-white px-6 py-3 font-medium hover:bg-blue-700 transition-colors" style={{borderRadius: '1rem'}}>
+            <button className="bg-blue-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-blue-700 transition-colors">
               Subscribe
             </button>
           </div>

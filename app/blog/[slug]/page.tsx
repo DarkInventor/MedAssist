@@ -142,7 +142,11 @@ export default function BlogPost({ params }: BlogPostPageProps) {
             <div className="flex items-center gap-4">
               <div className="w-12 h-12 bg-gray-200 rounded-full flex items-center justify-center">
                 <span className="text-gray-600 font-semibold">
-                  {post.author.split(' ').map(n => n[0]).join('')}
+                  <img 
+                    src={`https://avatar.vercel.sh/${post.author}`} 
+                    alt={`${post.author} avatar`}
+                    className="w-full h-full rounded-full"
+                  />
                 </span>
               </div>
               <div>

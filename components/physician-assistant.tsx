@@ -255,7 +255,7 @@ function AppSidebar({
       </SidebarHeader>
 
       <SidebarContent>
-        <div className="px-4 pb-4">
+        <div className="px-4 pb-4 py-2">
           <Button
             variant="outline"
             className="w-full justify-start text-gray-700 border-gray-300 hover:bg-gray-100 rounded-2xl"
