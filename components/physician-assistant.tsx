@@ -247,7 +247,7 @@ function AppSidebar({
           </div>
           <div>
             <h1 className="text-lg font-semibold text-gray-900">
-              OpenEvidence
+              MedAssist
             </h1>
             <p className="text-xs text-gray-500">Clinical AI</p>
           </div>
@@ -500,7 +500,7 @@ export function PhysicianAssistant() {
             <div className="flex items-center space-x-3">
               <SidebarTrigger />
               <h2 className="text-lg font-semibold text-gray-900">
-                OpenEvidence
+                MedAssist
               </h2>
 
               {/* Evidence Stack Toggle - Left side */}
@@ -913,7 +913,7 @@ export function PhysicianAssistant() {
         <AIAssistantInterface />
         {/* </div> */}
         <p className="text-xs text-gray-500 text-center mt-2">
-          OpenEvidence can make mistakes. Check important info.
+          MedAssist can make mistakes. Check important info.
         </p>
         {/* </div>
         </div> */}
