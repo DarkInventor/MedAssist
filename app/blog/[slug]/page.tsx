@@ -117,11 +117,11 @@ export default function BlogPost({ params }: BlogPostPageProps) {
   return (
     <div className="min-h-screen bg-white">
       {/* Back to Blog */}
-      <div className="border-b border-gray-100 py-4">
+      <div className="mt-10">
         <div className="max-w-4xl mx-auto px-4">
           <Link 
             href="/blog" 
-            className="inline-flex items-center text-sm text-gray-600 hover:text-gray-900 transition-colors"
+            className="inline-flex items-center text-sm text-gray-600 hover:text-gray-900 hover:underline transition-colors"
           >
             <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
@@ -132,7 +132,7 @@ export default function BlogPost({ params }: BlogPostPageProps) {
       </div>
 
       {/* Article Header */}
-      <header className="bg-white py-12">
+      <header className="bg-white py-10">
         <div className="max-w-4xl mx-auto px-4">
           {/* Hero Image */}
           <div 

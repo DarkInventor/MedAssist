@@ -21,7 +21,7 @@ module.exports = {
   additionalPaths: async (config) => {
     const result = []
 
-    // Canadian provinces for location-based SEO pages
+    // Canadian provinces for location-based SEO pages (IMPLEMENTED)
     const provinces = [
       'ontario', 'british-columbia', 'quebec', 'alberta', 
       'manitoba', 'saskatchewan', 'nova-scotia', 'new-brunswick',
@@ -29,22 +29,41 @@ module.exports = {
       'yukon', 'nunavut'
     ]
 
-    // Competitor comparison pages
+    // Competitor comparison pages (IMPLEMENTED)
     const competitors = [
       'uptodate', 'glass-health', 'scribeberry', 'heidi-health', 
       'tali-ai', 'hippocratic-ai', 'dragon-copilot', 'oracle-health'
     ]
 
-    // Specialty pages targeting primary care
+    // Specialty pages targeting primary care (IMPLEMENTED)
     const specialties = [
       'family-physicians', 'nurse-practitioners', 'pediatricians', 
       'rural-physicians', 'community-health', 'primary-care'
     ]
 
-    // Knowledge center categories
-    const knowledgeCategories = [
-      'documentation-burnout', 'ai-compliance', 'clinical-decision-support',
-      'emr-integration', 'ai-ethics-safety', 'implementation-guides'
+    // EMR integration pages (NOW IMPLEMENTED)
+    const emrSystems = [
+      'oscar', 'telus-ps-suite', 'epic', 'cerner', 'allscripts'
+    ]
+
+    // Feature-specific pages (NOW IMPLEMENTED)
+    const features = [
+      'ai-scribe', 'clinical-decision-support', 'voice-input', 
+      'evidence-based-research', 'workflow-automation',
+      'medical-documentation', 'patient-engagement', 'phipa-compliance',
+      'emr-integration', 'physician-burnout-reduction'
+    ]
+
+    // Solution pages (NOW IMPLEMENTED)
+    const solutions = [
+      'documentation-automation', 'clinical-decision-support', 
+      'voice-recognition', 'patient-engagement', 'billing-optimization',
+      'workflow-improvement'
+    ]
+
+    // Compliance pages (PARTIALLY IMPLEMENTED - only PHIPA exists)
+    const compliancePages = [
+      'phipa'  // Only this one is actually implemented
     ]
 
     // Add location-based pages
@@ -77,36 +96,7 @@ module.exports = {
       })
     })
 
-    // Add knowledge center category pages
-    knowledgeCategories.forEach(category => {
-      result.push({
-        loc: `/knowledge/category/${category}`,
-        changefreq: 'weekly',
-        priority: 0.6,
-        lastmod: new Date().toISOString(),
-      })
-    })
-
-    // Add compliance pages (expanded for comprehensive coverage)
-    const compliancePages = [
-      'phipa', 'pipeda', 'hipaa', 'quebec-privacy-act',
-      'phia-manitoba', 'hipa-saskatchewan', 'pipa-alberta', 'pipa-bc'
-    ]
-    
-    compliancePages.forEach(page => {
-      result.push({
-        loc: `/compliance/${page}`,
-        changefreq: 'monthly',
-        priority: 0.7,
-        lastmod: new Date().toISOString(),
-      })
-    })
-
     // Add EMR integration pages
-    const emrSystems = [
-      'oscar', 'telus-ps-suite', 'epic', 'cerner', 'allscripts'
-    ]
-    
     emrSystems.forEach(emr => {
       result.push({
         loc: `/emr/${emr}`,
@@ -116,14 +106,7 @@ module.exports = {
       })
     })
 
-    // Add feature-specific pages (expanded based on blog content)
-    const features = [
-      'ai-scribe', 'clinical-decision-support', 'voice-input', 
-      'evidence-based-research', 'workflow-automation',
-      'medical-documentation', 'patient-engagement', 'phipa-compliance',
-      'emr-integration', 'physician-burnout-reduction'
-    ]
-    
+    // Add feature-specific pages
     features.forEach(feature => {
       result.push({
         loc: `/features/${feature}`,
@@ -133,7 +116,35 @@ module.exports = {
       })
     })
 
-    // Add blog pages
+    // Add solution pages
+    solutions.forEach(solution => {
+      result.push({
+        loc: `/solutions/${solution}`,
+        changefreq: 'monthly',
+        priority: 0.7,
+        lastmod: new Date().toISOString(),
+      })
+    })
+
+    // Add compliance pages (only implemented ones)
+    compliancePages.forEach(page => {
+      result.push({
+        loc: `/compliance/${page}`,
+        changefreq: 'monthly',
+        priority: 0.7,
+        lastmod: new Date().toISOString(),
+      })
+    })
+
+    // Add knowledge center main page (IMPLEMENTED)
+    result.push({
+      loc: '/knowledge',
+      changefreq: 'weekly',
+      priority: 0.6,
+      lastmod: new Date().toISOString(),
+    })
+
+    // Add blog pages (IMPLEMENTED)
     result.push({
       loc: '/blog',
       changefreq: 'daily',
@@ -141,7 +152,7 @@ module.exports = {
       lastmod: new Date().toISOString(),
     })
 
-    // Add all 30 blog posts created for comprehensive SEO coverage
+    // Add all blog posts
     const blogSlugs = [
       // Clinic & Physiotherapy Audience (10 posts)
       'ai-tools-canadian-physiotherapy-clinics-2024',
@@ -189,52 +200,6 @@ module.exports = {
       })
     })
 
-    // Add use case specific pages
-    const useCases = [
-      'small-clinics', 'large-practices', 'hospital-systems',
-      'telehealth', 'walk-in-clinics', 'specialist-clinics'
-    ]
-    
-    useCases.forEach(useCase => {
-      result.push({
-        loc: `/use-cases/${useCase}`,
-        changefreq: 'monthly',
-        priority: 0.6,
-        lastmod: new Date().toISOString(),
-      })
-    })
-
-    // Add industry-specific pages
-    const industries = [
-      'physiotherapy', 'chiropractic', 'mental-health',
-      'dermatology', 'cardiology', 'pediatrics'
-    ]
-    
-    industries.forEach(industry => {
-      result.push({
-        loc: `/industries/${industry}`,
-        changefreq: 'monthly',
-        priority: 0.6,
-        lastmod: new Date().toISOString(),
-      })
-    })
-
-    // Add solution pages
-    const solutions = [
-      'documentation-automation', 'clinical-decision-support', 
-      'voice-recognition', 'patient-engagement', 'billing-optimization',
-      'workflow-improvement'
-    ]
-    
-    solutions.forEach(solution => {
-      result.push({
-        loc: `/solutions/${solution}`,
-        changefreq: 'monthly',
-        priority: 0.7,
-        lastmod: new Date().toISOString(),
-      })
-    })
-
     return result
   },
   transform: async (config, path) => {
@@ -257,7 +222,7 @@ module.exports = {
       }
     }
 
-    if (path.includes('/vs/') || path.includes('/compliance/')) {
+    if (path.includes('/vs/') || path.includes('/compliance/') || path.includes('/solutions/')) {
       return {
         loc: path,
         changefreq: 'monthly',
@@ -266,10 +231,10 @@ module.exports = {
       }
     }
 
-    if (path.includes('/knowledge/')) {
+    if (path.includes('/knowledge/') || path.includes('/emr/') || path.includes('/features/')) {
       return {
         loc: path,
-        changefreq: 'weekly',
+        changefreq: 'monthly',
         priority: 0.6,
         lastmod: new Date().toISOString(),
       }
@@ -289,33 +254,6 @@ module.exports = {
         loc: path,
         changefreq: 'monthly',
         priority: 0.7,
-        lastmod: new Date().toISOString(),
-      }
-    }
-
-    if (path.includes('/solutions/')) {
-      return {
-        loc: path,
-        changefreq: 'monthly',
-        priority: 0.7,
-        lastmod: new Date().toISOString(),
-      }
-    }
-
-    if (path.includes('/use-cases/') || path.includes('/industries/')) {
-      return {
-        loc: path,
-        changefreq: 'monthly',
-        priority: 0.6,
-        lastmod: new Date().toISOString(),
-      }
-    }
-
-    if (path.includes('/features/') || path.includes('/emr/')) {
-      return {
-        loc: path,
-        changefreq: 'monthly',
-        priority: 0.6,
         lastmod: new Date().toISOString(),
       }
     }

@@ -19,9 +19,7 @@ export const blogPosts: BlogPost[] = [
     slug: 'ai-tools-canadian-physiotherapy-clinics-2024',
     title: 'Best AI Tools for Canadian Physiotherapy Clinics in 2024',
     excerpt: 'Discover how AI-powered tools are revolutionizing Canadian physiotherapy clinics, from automated documentation to patient engagement platforms.',
-    content: `# Best AI Tools for Canadian Physiotherapy Clinics in 2024
-
-The healthcare landscape in Canada is rapidly evolving, with AI technologies leading the charge in improving clinic efficiency and patient outcomes. For physiotherapy clinics, the integration of AI tools has become not just an advantage, but a necessity to remain competitive and provide exceptional care.
+    content: `The healthcare landscape in Canada is rapidly evolving, with AI technologies leading the charge in improving clinic efficiency and patient outcomes. For physiotherapy clinics, the integration of AI tools has become not just an advantage, but a necessity to remain competitive and provide exceptional care.
 
 ## The Current State of Canadian Physiotherapy
 
