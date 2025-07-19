@@ -84,16 +84,16 @@ export function AIAssistantInterface() {
   };
 
   return (
-    <div className={`fixed bottom-0 right-0 bg-transparent z-50 ${
+    <div className={`fixed bottom-0 right-0 bg-transparent z-50   ${
       isMobile ? 'left-0' : state === "expanded" ? 'left-72' : 'left-12'
     }`}>
-      <div className="max-w-3xl mx-auto px-4 py-4">
+      <div className="max-w-3xl mx-auto px-4 py-4 ">
         <div className="w-full bg-transparent rounded-xl">
           <div className="w-full flex flex-col items-center">
       
 
         {/* Input area with integrated functions and file upload */}
-        <div className="w-full bg-white border border-gray-200 rounded-lg overflow-hidden mb-3">
+        <div className="w-full bg-white border border-gray-200 rounded-[1rem] overflow-hidden mb-3">
           <div className="p-4">
             <input
               ref={inputRef}

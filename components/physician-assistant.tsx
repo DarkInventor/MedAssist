@@ -34,6 +34,9 @@ import {
   ArrowRight,
   FileText,
   Layers,
+  LogOut,
+  ChevronDown,
+  ExternalLinkIcon,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -62,6 +65,13 @@ import {
   SidebarTrigger,
   SidebarInset,
 } from "@/components/ui/sidebar";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { AdvancedFilters } from "./advanced-filters";
 import { PatientContextUpload } from "./patient-context";
 import { VoiceInput } from "./voice-input";
@@ -227,16 +237,142 @@ const mockSearchHistory: SearchHistoryItem[] = [
   },
 ];
 
+// Simple Login Screen Component
+function LoginScreen({ onLogin }: { onLogin: () => void }) {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!email || !password) return;
+
+    setIsLoading(true);
+    
+    // Simulate login API call
+    setTimeout(() => {
+      setIsLoading(false);
+      // In a real app, you would validate credentials here
+      onLogin();
+    }, 1000);
+  };
+
+  return (
+    <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
+      <div className="sm:mx-auto sm:w-full sm:max-w-md">
+        <div className="flex justify-center">
+          <img src="/logo.png" alt="MedAssist" className="w-20 h-20 object-contain" />
+        </div>
+        <h2 className="mt-6 text-center text-3xl font-bold tracking-tight text-gray-900">
+          Sign in to MedAssist
+        </h2>
+        <p className="mt-2 text-center text-sm text-gray-600">
+          Your AI-powered clinical decision support
+        </p>
+      </div>
+
+      <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
+        <div className="bg-white py-8 px-4 shadow-lg sm:rounded-2xl sm:px-10">
+          <form className="space-y-6" onSubmit={handleLogin}>
+            <div>
+              <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+                Email address
+              </label>
+              <div className="mt-1">
+                <Input
+                  id="email"
+                  name="email"
+                  type="email"
+                  autoComplete="email"
+                  required
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="rounded-2xl"
+                  placeholder="doctor@hospital.com"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+                Password
+              </label>
+              <div className="mt-1">
+                <Input
+                  id="password"
+                  name="password"
+                  type="password"
+                  autoComplete="current-password"
+                  required
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="rounded-2xl"
+                  placeholder="Enter your password"
+                />
+              </div>
+            </div>
+
+            <div className="flex items-center justify-between">
+              <div className="text-sm">
+                <a href="#" className="font-medium text-blue-600 hover:text-blue-500">
+                  Forgot your password?
+                </a>
+              </div>
+            </div>
+
+            <div>
+              <Button
+                type="submit"
+                disabled={isLoading || !email || !password}
+                className="w-full rounded-2xl"
+              >
+                {isLoading ? (
+                  <div className="flex items-center">
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                    Signing in...
+                  </div>
+                ) : (
+                  "Sign in"
+                )}
+              </Button>
+            </div>
+          </form>
+
+          <div className="mt-6">
+            <div className="relative">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-gray-300" />
+              </div>
+              <div className="relative flex justify-center text-sm">
+                <span className="px-2 bg-white text-gray-500">Demo Credentials</span>
+              </div>
+            </div>
+
+            <div className="mt-3 text-center">
+              <p className="text-xs text-gray-500">
+                Email: demo@medassist.com<br />
+                Password: demo123
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function AppSidebar({
   physician,
   savedConsultations,
   searchHistory,
   onNewQuery,
+  onLogout,
 }: {
   physician: PhysicianProfile;
   savedConsultations: SavedConsultation[];
   searchHistory: SearchHistoryItem[];
   onNewQuery: () => void;
+  onLogout: () => void;
 }) {
   return (
     <Sidebar variant="inset">
@@ -306,23 +442,60 @@ function AppSidebar({
       </SidebarContent>
 
       <SidebarFooter className="p-4 border-t border-gray-200">
-        <div className="flex items-center space-x-3">
-          <div className="w-8 h-8 bg-blue-600 rounded-2xl flex items-center justify-center">
-            <User className="w-4 h-4 text-white" />
-          </div>
-          <div className="flex-1">
-            <p className="text-sm font-medium text-gray-900">
-              {physician.name}
-            </p>
-            <p className="text-xs text-gray-500">{physician.specialty}</p>
-          </div>
-        </div>
+        <DropdownMenu >
+          <DropdownMenuTrigger asChild className="px-4">
+            <Button
+              variant="ghost"
+              className="w-full h-auto p-3 justify-start hover:bg-gray-100 rounded-2xl"
+            >
+              <div className="flex items-center space-x-3 w-full">
+                <div className="w-8 h-8 bg-blue-600 rounded-2xl flex items-center justify-center">
+                  <User className="w-4 h-4 text-white" />
+                </div>
+                <div className="flex-1 text-left">
+                  <p className="text-sm font-medium text-gray-900">
+                    {physician.name}
+                  </p>
+                  <p className="text-xs text-gray-500">{physician.specialty}</p>
+                </div>
+                {/* <ExternalLinkIcon className="w-4 h-4 text-gray-400" /> */}
+              </div>
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-56 px-1">
+            <div className="px-3 py-2">
+              <p className="text-sm font-medium text-gray-900">
+                {physician.name}
+              </p>
+              <p className="text-xs text-gray-500">{physician.specialty}</p>
+              <p className="text-xs text-gray-500">{physician.institution}</p>
+            </div>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem className="cursor-pointer ">
+              <Settings className="w-4 h-4 mr-2" />
+              Settings
+            </DropdownMenuItem>
+            <DropdownMenuItem className="cursor-pointer">
+              <User className="w-4 h-4 mr-2" />
+              Profile
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem 
+              className="cursor-pointer text-red-600 focus:text-red-600"
+              onClick={onLogout}
+            >
+              <LogOut className="w-4 h-4 mr-2" />
+              Logout
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </SidebarFooter>
     </Sidebar>
   );
 }
 
 export function PhysicianAssistant() {
+  const [isAuthenticated, setIsAuthenticated] = useState(false); // Start with login screen
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
       id: "1",
@@ -367,6 +540,28 @@ export function PhysicianAssistant() {
     SavedConsultation[]
   >(mockSavedConsultations);
   const [activeTab, setActiveTab] = useState("new-search");
+
+  // Authentication functions
+  const handleLogout = () => {
+    // Clear user session data
+    setMessages([]);
+    setInput("");
+    setIsLoading(false);
+    setEvidenceStackOpen(false);
+    setPatientContext(null);
+    setSearchHistory([]);
+    setSavedConsultations([]);
+    setActiveTab("new-search");
+    
+    // Set authentication state to false
+    setIsAuthenticated(false);
+    
+    // In a real app, you would also:
+    // - Clear tokens from localStorage/cookies
+    // - Make API call to invalidate session
+    // - Redirect to login page
+    console.log("User logged out successfully");
+  };
 
   // Reset function for new clinical query
   const handleNewQuery = () => {
@@ -485,6 +680,11 @@ export function PhysicianAssistant() {
     }
   };
 
+  // Show login screen if not authenticated
+  if (!isAuthenticated) {
+    return <LoginScreen onLogin={() => setIsAuthenticated(true)} />;
+  }
+
   return (
     <SidebarProvider>
       <AppSidebar
@@ -492,6 +692,7 @@ export function PhysicianAssistant() {
         savedConsultations={savedConsultations}
         searchHistory={searchHistory}
         onNewQuery={handleNewQuery}
+        onLogout={handleLogout}
       />
       <SidebarInset>
         {/* Simple Header */}
