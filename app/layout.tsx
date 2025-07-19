@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import './globals.css'
+import Navigation from '../components/navigation'
 
 export const metadata: Metadata = {
   title: 'MedAssist - AI Medical Assistant for Canadian Physicians | PHIPA Compliant',
@@ -190,7 +191,10 @@ export default function RootLayout({
           }}
         />
       </head>
-      <body>{children}</body>
+      <body>
+        <Navigation />
+        {children}
+      </body>
     </html>
   )
 }
