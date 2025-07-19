@@ -32,6 +32,8 @@ import {
   Copy,
   ExternalLink,
   ArrowRight,
+  FileText,
+  Layers,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -40,6 +42,19 @@ import { Textarea } from "@/components/ui/textarea"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Separator } from "@/components/ui/separator"
+import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet"
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarFooter,
+  SidebarHeader,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+  SidebarProvider,
+  SidebarTrigger,
+  SidebarInset,
+} from "@/components/ui/sidebar"
 import { AdvancedFilters } from "./advanced-filters"
 import { PatientContextUpload } from "./patient-context"
 import { VoiceInput } from "./voice-input"
@@ -53,6 +68,7 @@ import type {
   SearchHistoryItem,
   PatientContext
 } from "../types/medical"
+import { AIAssistantInterface } from "./ai-assistant-interface"
 
 // Enhanced mock data with more comprehensive information
 const mockPhysician: PhysicianProfile = {
@@ -188,6 +204,86 @@ const mockSearchHistory: SearchHistoryItem[] = [
   }
 ]
 
+function AppSidebar({ 
+  physician, 
+  savedConsultations, 
+  searchHistory, 
+  onNewQuery 
+}: {
+  physician: PhysicianProfile;
+  savedConsultations: SavedConsultation[];
+  searchHistory: SearchHistoryItem[];
+  onNewQuery: () => void;
+}) {
+  return (
+    <Sidebar variant="inset">
+      <SidebarHeader className="p-4">
+        <div className="flex items-center space-x-3">
+          <div className="w-8 h-8 bg-gray-900 rounded-2xl flex items-center justify-center">
+            <Search className="w-4 h-4 text-white" />
+          </div>
+          <div>
+            <h1 className="text-lg font-semibold text-gray-900">OpenEvidence</h1> 
+            <p className="text-xs text-gray-500">Clinical AI</p>
+            
+          </div>
+         
+        </div>
+      </SidebarHeader>
+
+      <SidebarContent>
+        <div className="px-4 pb-4">
+          <Button
+            variant="outline"
+            className="w-full justify-start text-gray-700 border-gray-300 hover:bg-gray-100 rounded-2xl"
+            onClick={onNewQuery}
+          >
+            <Plus className="w-4 h-4 mr-2" />
+            New clinical query
+          </Button>
+        </div>
+
+        <div className="flex-1 px-4">
+          <SidebarMenu>
+            {savedConsultations.map((consultation) => (
+              <SidebarMenuItem key={consultation.id}>
+                <SidebarMenuButton className="rounded-2xl hover:bg-gray-100">
+                  <div className="flex flex-col items-start w-full">
+                    <p className="text-sm text-gray-800 truncate font-medium w-full text-left">{consultation.title}</p>
+                    <p className="text-xs text-gray-500">{consultation.date.toLocaleDateString()}</p>
+                  </div>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            ))}
+            {searchHistory.map((item) => (
+              <SidebarMenuItem key={item.id}>
+                <SidebarMenuButton className="rounded-2xl hover:bg-gray-100">
+                  <div className="flex flex-col items-start w-full">
+                    <p className="text-sm text-gray-800 truncate w-full text-left">{item.query}</p>
+                    <p className="text-xs text-gray-500">{item.timestamp.toLocaleDateString()}</p>
+                  </div>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            ))}
+          </SidebarMenu>
+        </div>
+      </SidebarContent>
+
+      <SidebarFooter className="p-4 border-t border-gray-200">
+        <div className="flex items-center space-x-3">
+          <div className="w-8 h-8 bg-blue-600 rounded-2xl flex items-center justify-center">
+            <User className="w-4 h-4 text-white" />
+          </div>
+          <div className="flex-1">
+            <p className="text-sm font-medium text-gray-900">{physician.name}</p>
+            <p className="text-xs text-gray-500">{physician.specialty}</p>
+          </div>
+        </div>
+      </SidebarFooter>
+    </Sidebar>
+  )
+}
+
 export function PhysicianAssistant() {
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
@@ -213,7 +309,7 @@ export function PhysicianAssistant() {
   
   const [input, setInput] = useState("")
   const [isLoading, setIsLoading] = useState(false)
-  const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [evidenceStackOpen, setEvidenceStackOpen] = useState(false)
   const [filters, setFilters] = useState<FilterOptions>({
     dateRange: "last-2-years",
     studyType: "all",
@@ -226,6 +322,17 @@ export function PhysicianAssistant() {
   const [searchHistory, setSearchHistory] = useState<SearchHistoryItem[]>(mockSearchHistory)
   const [savedConsultations, setSavedConsultations] = useState<SavedConsultation[]>(mockSavedConsultations)
   const [activeTab, setActiveTab] = useState("new-search")
+
+  // Reset function for new clinical query
+  const handleNewQuery = () => {
+    setMessages([])
+    setInput("")
+    setIsLoading(false)
+    setEvidenceStackOpen(false)
+    setPatientContext(null)
+    setActiveTab("new-search")
+    // Keep filters, physician, searchHistory, and savedConsultations intact
+  }
 
   const handleSendMessage = async (messageText?: string) => {
     const finalInput = messageText || input
@@ -327,173 +434,105 @@ export function PhysicianAssistant() {
   }
 
   return (
-    <div className="flex h-screen bg-gray-50">
-      {/* Mobile Sidebar Overlay */}
-      {sidebarOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden" onClick={() => setSidebarOpen(false)} />
-      )}
-
-      {/* Left Sidebar */}
-      <div
-        className={`${
-          sidebarOpen ? "translate-x-0" : "-translate-x-full"
-        } lg:translate-x-0 fixed lg:relative z-50 w-80 bg-white flex flex-col transition-transform duration-300 ease-in-out lg:border-r border-gray-200`}
-      >
-        {/* Mobile Close Button */}
-        <div className="lg:hidden flex justify-end p-4">
-          <Button variant="ghost" size="sm" onClick={() => setSidebarOpen(false)}>
-            <X className="w-5 h-5 text-gray-600" />
-          </Button>
-        </div>
-
-        {/* Brand Header */}
-        <div className="text-black leading-3 mx-[13px] px-3 py-4">
-          <div className="flex items-center space-x-3 leading-3">
-            <div className="w-8 h-8 bg-gradient-to-br from-blue-600 to-indigo-700 rounded-lg flex items-center justify-center">
-              <Search className="w-4 h-4 text-white" />
-            </div>
-            <div>
-              <h1 className="text-lg font-bold text-black">OpenEvidence</h1>
-              <p className="text-sm text-slate-500">Enterprise Clinical AI</p>
-            </div>
-          </div>
-        </div>
-
-        {/* Doctor Profile */}
-        <div className="px-6 py-4 bg-gradient-to-r from-blue-50 to-indigo-50">
+    <SidebarProvider>
+      <AppSidebar 
+        physician={physician} 
+        savedConsultations={savedConsultations} 
+        searchHistory={searchHistory} 
+        onNewQuery={handleNewQuery}
+      />
+      <SidebarInset>
+        {/* Simple Header */}
+        <header className="px-4 py-3 bg-white">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-indigo-700 rounded-lg flex items-center justify-center">
-                <User className="w-5 h-5 text-white" />
-              </div>
-              <div>
-                <h3 className="font-medium text-gray-900">{physician.name}</h3>
-                <p className="text-blue-700 text-sm font-medium">{physician.specialty}</p>
-                <p className="text-gray-500 text-xs">{physician.institution}</p>
-              </div>
-            </div>
-            <PhysicianProfileSettings 
-              profile={physician} 
-              onProfileUpdate={setPhysician}
-            />
-          </div>
-        </div>
-
-        {/* Navigation Tabs */}
-        <div className="px-4 py-2">
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className="grid w-full grid-cols-3">
-              <TabsTrigger value="new-search" className="text-xs">New</TabsTrigger>
-              <TabsTrigger value="history" className="text-xs">History</TabsTrigger>
-              <TabsTrigger value="saved" className="text-xs">Saved</TabsTrigger>
-            </TabsList>
-
-            <TabsContent value="new-search" className="mt-4 space-y-2">
-              <Button
-                variant="ghost"
-                className="w-full justify-start text-blue-700 bg-blue-50 hover:bg-blue-100 font-medium text-sm py-3 px-3 rounded-lg"
-                onClick={() => {
-                  setMessages([])
-                  setInput("")
-                }}
-              >
-                <Plus className="w-4 h-4 mr-3" />
-                New Clinical Query
-              </Button>
+              <SidebarTrigger />
+              <h2 className="text-lg font-semibold text-gray-900">OpenEvidence</h2>
               
-              <div className="space-y-1">
-                <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide px-3">Quick Start</p>
-                <div className="space-y-1">
-                  {[
-                    "Latest hypertension guidelines",
-                    "Diabetes medication updates",
-                    "COVID-19 treatment protocols"
-                  ].map((query, index) => (
-                    <Button
-                      key={index}
-                      variant="ghost"
-                      className="w-full justify-start text-gray-600 hover:bg-gray-100 text-sm py-2 px-3 rounded-lg"
-                      onClick={() => handleSendMessage(query)}
-                    >
-                      <Lightbulb className="w-3 h-3 mr-2" />
-                      {query}
-                    </Button>
-                  ))}
-                </div>
-              </div>
-            </TabsContent>
-
-            <TabsContent value="history" className="mt-4 space-y-2">
-              <div className="space-y-2">
-                <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide px-3">Recent Searches</p>
-                {searchHistory.slice(0, 5).map((item) => (
-                  <div key={item.id} className="p-3 rounded-lg hover:bg-gray-50 cursor-pointer transition-colors">
-                    <p className="text-gray-700 text-sm truncate">{item.query}</p>
-                    <div className="flex items-center justify-between mt-2">
-                      <span className="text-xs text-gray-500">
-                        {item.timestamp.toLocaleDateString()}
-                      </span>
-                      <Badge variant="outline" className="text-xs">
-                        {item.resultCount} results
-                      </Badge>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </TabsContent>
-
-            <TabsContent value="saved" className="mt-4 space-y-2">
-              <div className="space-y-2">
-                <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide px-3">Saved Consultations</p>
-                {savedConsultations.map((consultation) => (
-                  <div key={consultation.id} className="p-3 rounded-lg hover:bg-gray-50 cursor-pointer transition-colors">
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1">
-                        <p className="text-gray-700 font-medium text-sm truncate">{consultation.title}</p>
-                        <p className="text-gray-500 text-xs mt-1">{consultation.date.toLocaleDateString()}</p>
-                        <div className="flex items-center justify-between mt-2">
-                          <span className="text-xs text-gray-500">{consultation.messageCount} queries</span>
-                          {consultation.isBookmarked && <Heart className="w-3 h-3 text-red-500 fill-current" />}
-                        </div>
-                      </div>
-                    </div>
-                    {consultation.tags && consultation.tags.length > 0 && (
-                      <div className="flex flex-wrap gap-1 mt-2">
-                        {consultation.tags.slice(0, 2).map((tag, index) => (
-                          <Badge key={index} variant="outline" className="text-xs">
-                            {tag}
-                          </Badge>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                ))}
-              </div>
-            </TabsContent>
-          </Tabs>
-        </div>
-      </div>
-
-      {/* Main Content */}
-      <div className="flex-1 flex flex-col min-w-0">
-        {/* Top Header */}
-        <div className="bg-white border-b border-gray-200 px-6 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4">
-              <Button
-                variant="ghost"
-                size="sm"
-                className="lg:hidden text-gray-600"
-                onClick={() => setSidebarOpen(true)}
-              >
-                <Menu className="w-5 h-5" />
-              </Button>
-              <div>
-                <h2 className="text-xl font-bold text-gray-900">Clinical Research Assistant</h2>
-                <p className="text-gray-600 text-sm">AI-powered evidence synthesis for clinical decision making</p>
-              </div>
+              {/* Evidence Stack Toggle - Left side */}
+           
             </div>
-            <div className="hidden md:flex items-center space-x-2">
+
+            {/* Right side controls */}
+            <div className="flex items-center space-x-2">
+            <Sheet open={evidenceStackOpen} onOpenChange={setEvidenceStackOpen}>
+                <SheetTrigger asChild>
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    className="text-gray-600 hover:bg-gray-100 rounded-2xl"
+                  >
+                    <Layers className="w-4 h-4 mr-2" />
+                    Evidence Stack
+                    <Badge variant="outline" className="ml-2 text-gray-600 font-medium rounded-2xl">
+                      {mockStudies.length}
+                    </Badge>
+                  </Button>
+                </SheetTrigger>
+                <SheetContent side="right" className="w-[400px] sm:w-[500px]">
+                  <SheetHeader>
+                    <SheetTitle className="flex items-center">
+                      <Layers className="w-5 h-5 mr-2 text-blue-600" />
+                      Evidence Stack
+                    </SheetTitle>
+                    <SheetDescription>
+                      Latest research findings and clinical evidence for your queries
+                    </SheetDescription>
+                  </SheetHeader>
+                  
+                  <div className="mt-6 space-y-4 overflow-y-auto max-h-[calc(100vh-200px)]">
+                    {mockStudies.map((study, index) => (
+                      <div key={study.id} className="hover:bg-gray-50 cursor-pointer transition-all bg-white border border-gray-200 rounded-2xl p-4">
+                        <button 
+                          className="text-left w-full" 
+                          onClick={() => window.open(study.citationUrl, "_blank")}
+                        >
+                          <h4 className="text-gray-900 font-semibold text-sm leading-tight mb-3">{study.title}</h4>
+                          <p className="text-gray-600 text-xs mb-3">{study.journal}</p>
+                          <div className="flex items-center justify-between mb-3">
+                            <div className="flex items-center space-x-2">
+                              <Badge
+                                className={`text-xs rounded-2xl ${
+                                  study.effectiveness === "effective"
+                                    ? "bg-green-100 text-green-700"
+                                    : "bg-amber-100 text-amber-700"
+                                }`}
+                              >
+                                {study.studyType}
+                              </Badge>
+                              <div className="flex items-center space-x-1 bg-gray-100 rounded-2xl px-2 py-1">
+                                <Star className="w-3 h-3 text-yellow-500 fill-current" />
+                                <span className="text-xs text-gray-700 font-medium">{study.qualityScore}</span>
+                              </div>
+                            </div>
+                            <span className="text-xs text-gray-500 font-medium">
+                              {new Date(study.date).getFullYear()}
+                            </span>
+                          </div>
+                          <p className="text-xs text-gray-700 mb-3">{study.verdict}</p>
+                          <div className="text-xs text-gray-500">
+                            {study.sampleSize?.toLocaleString()} participants
+                          </div>
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Quick Actions in Sheet */}
+                  <div className="mt-6 pt-4 border-t border-gray-200">
+                    <div className="space-y-2">
+                      <Button variant="outline" size="sm" className="w-full justify-start rounded-2xl" onClick={handleExportChat}>
+                        <FileDown className="w-4 h-4 mr-2" />
+                        Export Evidence
+                      </Button>
+                      <Button variant="outline" size="sm" className="w-full justify-start rounded-2xl" onClick={handleSaveConsultation}>
+                        <Bookmark className="w-4 h-4 mr-2" />
+                        Save Consultation
+                      </Button>
+                    </div>
+                  </div>
+                </SheetContent>
+              </Sheet>
               <AdvancedFilters 
                 filters={filters} 
                 onFiltersChange={setFilters}
@@ -503,365 +542,239 @@ export function PhysicianAssistant() {
                 context={patientContext}
                 onContextChange={setPatientContext}
               />
-              <Button 
-                variant="ghost" 
-                size="sm" 
-                className="text-gray-600 hover:bg-gray-100"
-                onClick={handleExportChat}
-              >
-                <Download className="w-4 h-4 mr-2" />
-                Export
+              <Button variant="ghost" size="sm" onClick={handleExportChat}>
+                <Download className="w-4 h-4" />
               </Button>
-              <Button 
-                variant="ghost" 
-                size="sm" 
-                className="text-gray-600 hover:bg-gray-100"
-                onClick={handleSaveConsultation}
-              >
-                <Bookmark className="w-4 h-4 mr-2" />
-                Save
-              </Button>
-              <Button variant="ghost" size="sm" className="text-gray-600 hover:bg-gray-100">
-                <Share className="w-4 h-4 mr-2" />
-                Share
+              <Button variant="ghost" size="sm" onClick={handleSaveConsultation}>
+                <Bookmark className="w-4 h-4" />
               </Button>
             </div>
           </div>
-        </div>
+        </header>
 
-        {/* Content Area */}
-        <div className="flex-1 flex overflow-hidden">
-          {/* Chat Messages */}
-          <div className="flex-1 flex flex-col">
-            <div className="flex-1 p-4 md:p-6 overflow-y-auto">
-              <div className="max-w-4xl mx-auto space-y-6">
-                {/* Enhanced Disclaimer */}
-                <Card className="border-l-4 border-l-amber-500 bg-amber-50">
-                  <CardContent className="p-4">
-                    <div className="flex items-start space-x-3">
-                      <AlertTriangle className="w-5 h-5 text-amber-600 mt-0.5 flex-shrink-0" />
-                      <div>
-                        <h4 className="font-semibold text-amber-900 mb-1">Clinical Decision Support Notice</h4>
-                        <p className="text-amber-800 text-sm leading-relaxed">
-                          This AI-generated evidence synthesis is for informational purposes only and does not process
-                          patient data. Not a substitute for professional medical judgment, diagnosis, or treatment. 
-                          Always verify with current clinical guidelines and consult colleagues when needed.
-                        </p>
-                        <div className="flex items-center space-x-4 mt-3 text-xs text-amber-700">
-                          <span>HIPAA/PIPEDA Compliant</span>
-                          <span>•</span>
-                          <span>SOC 2 Certified</span>
-                          <span>•</span>
-                          <span>Audit Trail Enabled</span>
-                        </div>
-                      </div>
+        {/* Chat Content */}
+        <div className="flex-1 overflow-y-auto">
+          {messages.length === 0 ? (
+            <div className="flex flex-col items-center justify-center h-full px-4">
+              <h1 className="text-2xl font-semibold text-gray-900 mb-2">Where should we begin?</h1>
+              <p className="text-gray-600 text-center mb-8">Ask me about the latest medical research, treatment protocols, or clinical guidelines.</p>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 w-full max-w-2xl">
+                {[
+                  "Latest hypertension guidelines",
+                  "Diabetes medication updates", 
+                  "COVID-19 treatment protocols",
+                  "Evidence for statins in elderly"
+                ].map((query, index) => (
+                  <Button
+                    key={index}
+                    variant="outline"
+                    className="p-4 h-auto text-left justify-start rounded-2xl"
+                    onClick={() => handleSendMessage(query)}
+                  >
+                    <div>
+                      <p className="font-medium">{query}</p>
                     </div>
-                  </CardContent>
-                </Card>
+                  </Button>
+                ))}
+              </div>
+            </div>
+          ) : (
+            <div className="max-w-3xl mx-auto px-4 py-8">
+              <div className="space-y-8">
+                {/* Clinical Notice */}
+                <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4">
+                  <div className="flex items-start space-x-3">
+                    <AlertTriangle className="w-5 h-5 text-amber-600 mt-0.5 flex-shrink-0" />
+                    <div>
+                      <h4 className="font-semibold text-amber-900 mb-1">Clinical Decision Support Notice</h4>
+                      <p className="text-amber-800 text-sm">
+                        This AI-generated evidence synthesis is for informational purposes only. Not a substitute for professional medical judgment, diagnosis, or treatment.
+                      </p>
+                    </div>
+                  </div>
+                </div>
 
                 {/* Patient Context Banner */}
                 {patientContext && (
-                  <Card className="border-l-4 border-l-green-500 bg-green-50">
-                    <CardContent className="p-4">
-                      <div className="flex items-center justify-between">
+                  <div className="bg-green-50 border border-green-200 rounded-2xl p-4">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-3">
+                        <CheckCircle className="w-5 h-5 text-green-600" />
                         <div>
-                          <h4 className="font-semibold text-green-900 mb-1">Patient Context Active</h4>
-                          <p className="text-green-800 text-sm">
-                            Research results are being personalized based on anonymized patient information
-                          </p>
+                          <h4 className="font-semibold text-green-900">Patient Context Active</h4>
+                          <p className="text-green-800 text-sm">Research results are being personalized</p>
                         </div>
-                        <Button 
-                          variant="ghost" 
-                          size="sm" 
-                          onClick={() => setPatientContext(null)}
-                          className="text-green-700 hover:bg-green-100"
-                        >
-                          <X className="w-4 h-4" />
-                        </Button>
                       </div>
-                    </CardContent>
-                  </Card>
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        onClick={() => setPatientContext(null)}
+                      >
+                        <X className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  </div>
                 )}
 
                 {messages.map((message) => (
                   <div key={message.id}>
                     {message.role === "user" && (
-                      <div className="flex justify-end mb-4">
-                        <Card className="max-w-[80%] bg-blue-600 text-white">
-                          <CardContent className="p-4">
-                            <p className="font-medium">{message.content}</p>
-                            <p className="text-blue-100 text-xs mt-2">{message.timestamp.toLocaleTimeString()}</p>
-                          </CardContent>
-                        </Card>
+                      <div className="flex justify-end mb-6">
+                        <div className="bg-gray-100 rounded-2xl px-4 py-3 max-w-[80%]">
+                          <p className="text-gray-900">{message.content}</p>
+                        </div>
                       </div>
                     )}
 
                     {message.role === "assistant" && (
-                      <div className="mb-6">
-                        <Card className="shadow-sm">
-                          <CardHeader className="pb-4">
-                            <div className="flex items-center space-x-2">
-                              <div className="w-6 h-6 bg-gradient-to-br from-blue-600 to-indigo-700 rounded-full flex items-center justify-center">
-                                <Search className="w-3 h-3 text-white" />
-                              </div>
-                              <CardTitle className="text-sm font-semibold text-gray-600 uppercase tracking-wide">
-                                Evidence Analysis
-                              </CardTitle>
-                              <Badge variant="outline" className="ml-auto">
-                                {message.studies?.length || 0} Studies Found
-                              </Badge>
-                            </div>
-                          </CardHeader>
-                          <CardContent>
-                            <p className="text-gray-900 font-medium mb-6">{message.content}</p>
+                      <div className="mb-8">
+                        <div className="flex items-start space-x-3 mb-4">
+                          <div className="w-8 h-8 bg-green-600 rounded-2xl flex items-center justify-center flex-shrink-0">
+                            <Search className="w-4 h-4 text-white" />
+                          </div>
+                          <div className="flex-1">
+                            <p className="text-gray-900 leading-relaxed">{message.content}</p>
+                          </div>
+                        </div>
 
-                            {message.studies && (
-                              <div className="space-y-6">
-                                {message.studies.map((study, index) => (
-                                  <div key={study.id} className="border-l-4 border-l-gray-200 pl-6">
-                                    <div className="flex items-start justify-between mb-3">
-                                      <div className="flex items-start space-x-3">
-                                        {study.effectiveness === "effective" ? (
-                                          <CheckCircle className="w-5 h-5 text-green-600 mt-1 flex-shrink-0" />
-                                        ) : (
-                                          <AlertTriangle className="w-5 h-5 text-amber-600 mt-1 flex-shrink-0" />
-                                        )}
-                                        <div className="flex-1">
-                                          <h4 className="font-semibold text-gray-900 text-base leading-tight">
-                                            {study.title}
-                                          </h4>
-                                          <p className="text-gray-600 text-sm mt-1">{study.journal}</p>
-                                          <div className="flex items-center space-x-4 mt-2 text-xs text-gray-500">
-                                            <span>{study.sampleSize?.toLocaleString()} participants</span>
-                                            <span>Quality: {study.qualityScore}/10</span>
-                                            <span>{study.publicationStatus}</span>
-                                          </div>
-                                        </div>
-                                      </div>
-                                      <div className="flex flex-col space-y-2 ml-4">
-                                        <div className="flex space-x-2">
-                                          <Badge
-                                            className={`text-xs font-medium ${
-                                              study.effectiveness === "effective"
-                                                ? "bg-green-100 text-green-800"
-                                                : "bg-amber-100 text-amber-800"
-                                            }`}
-                                          >
-                                            {study.effectiveness}
-                                          </Badge>
-                                          <Badge variant="outline" className="text-xs font-medium">
-                                            {study.studyType}
-                                          </Badge>
-                                        </div>
-                                        <div className="flex items-center space-x-1">
-                                          <Star className="w-3 h-3 text-yellow-500 fill-current" />
-                                          <span className="text-xs text-gray-600">{study.qualityScore}</span>
-                                        </div>
-                                      </div>
+                        {message.studies && (
+                          <div className="ml-11 space-y-6">
+                            {message.studies.map((study, index) => (
+                              <div key={study.id} className="border border-gray-200 rounded-2xl p-4">
+                                <div className="flex items-start justify-between mb-3">
+                                  <div className="flex items-start space-x-3 flex-1">
+                                    <div className={`w-6 h-6 rounded-2xl flex items-center justify-center flex-shrink-0 ${
+                                      study.effectiveness === "effective" 
+                                        ? "bg-green-100" 
+                                        : "bg-amber-100"
+                                    }`}>
+                                      {study.effectiveness === "effective" ? (
+                                        <CheckCircle className="w-3 h-3 text-green-600" />
+                                      ) : (
+                                        <AlertTriangle className="w-3 h-3 text-amber-600" />
+                                      )}
                                     </div>
-
-                                    <p className="text-gray-700 leading-relaxed mb-3">{study.verdict}</p>
-
-                                    {study.keyTakeaway && (
-                                      <Card className="bg-blue-50 border-blue-200 mb-4">
-                                        <CardContent className="p-3">
-                                          <p className="text-blue-900 text-sm">
-                                            <span className="font-semibold">Clinical Significance:</span>{" "}
-                                            {study.keyTakeaway}
-                                          </p>
-                                        </CardContent>
-                                      </Card>
-                                    )}
-
-                                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between pt-3 space-y-2 sm:space-y-0">
-                                      <p className="text-gray-500 text-sm">
-                                        <span className="font-medium">Target Population:</span> {study.targetPopulation}
-                                      </p>
-                                      <div className="flex items-center space-x-3">
-                                        <Button
-                                          variant="ghost"
-                                          size="sm"
-                                          className="text-blue-600 hover:text-blue-800 hover:bg-blue-50 font-medium"
-                                          onClick={() => window.open(study.citationUrl, "_blank")}
-                                        >
-                                          <ExternalLink className="w-4 h-4 mr-1" />
-                                          View Study
-                                        </Button>
-                                        <Button variant="ghost" size="sm" className="text-gray-600 hover:bg-gray-100">
-                                          <Bookmark className="w-4 h-4 mr-1" />
-                                          Save
-                                        </Button>
-                                        <Button variant="ghost" size="sm" className="text-gray-600 hover:bg-gray-100">
-                                          <Copy className="w-4 h-4 mr-1" />
-                                          Cite
-                                        </Button>
+                                    <div className="flex-1">
+                                      <h4 className="font-semibold text-gray-900 leading-tight">{study.title}</h4>
+                                      <p className="text-gray-600 text-sm mt-1">{study.journal}</p>
+                                      <div className="flex items-center space-x-4 mt-2 text-xs text-gray-500">
+                                        <span>{study.sampleSize?.toLocaleString()} participants</span>
+                                        <span>Quality: {study.qualityScore}/10</span>
+                                        <span>{study.studyType}</span>
                                       </div>
                                     </div>
                                   </div>
-                                ))}
-                              </div>
-                            )}
+                                </div>
 
-                            {/* Follow-up Suggestions */}
-                            {message.followUpSuggestions && message.followUpSuggestions.length > 0 && (
-                              <div className="mt-6 pt-6 border-t border-gray-200">
-                                <h4 className="text-sm font-semibold text-gray-700 mb-3 flex items-center">
-                                  <Lightbulb className="w-4 h-4 mr-2" />
-                                  Suggested Follow-up Questions
-                                </h4>
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                                  {message.followUpSuggestions.map((suggestion, index) => (
+                                <p className="text-gray-700 mb-3">{study.verdict}</p>
+
+                                {study.keyTakeaway && (
+                                  <div className="bg-blue-50 border border-blue-200 rounded-2xl p-3 mb-3">
+                                    <p className="text-blue-900 text-sm">
+                                      <span className="font-semibold">Clinical Significance:</span> {study.keyTakeaway}
+                                    </p>
+                                  </div>
+                                )}
+
+                                <div className="flex items-center justify-between pt-3 border-t border-gray-200">
+                                  <p className="text-gray-600 text-sm">
+                                    <span className="font-semibold">Population:</span> {study.targetPopulation}
+                                  </p>
+                                  <div className="flex items-center space-x-2">
                                     <Button
-                                      key={index}
-                                      variant="outline"
+                                      variant="ghost"
                                       size="sm"
-                                      className="justify-start text-left h-auto py-2 px-3 hover:bg-blue-50 hover:border-blue-200"
-                                      onClick={() => handleFollowUpClick(suggestion)}
+                                      className="text-blue-600 hover:bg-blue-50 rounded-2xl"
+                                      onClick={() => window.open(study.citationUrl, "_blank")}
                                     >
-                                      <ArrowRight className="w-3 h-3 mr-2 flex-shrink-0" />
-                                      <span className="text-sm">{suggestion}</span>
+                                      <ExternalLink className="w-3 h-3 mr-1" />
+                                      View Study
                                     </Button>
-                                  ))}
+                                    <Button variant="ghost" size="sm" className="rounded-2xl">
+                                      <Bookmark className="w-3 h-3 mr-1" />
+                                      Save
+                                    </Button>
+                                  </div>
                                 </div>
                               </div>
-                            )}
-                          </CardContent>
-                        </Card>
+                            ))}
+                          </div>
+                        )}
+
+                        {/* Follow-up Suggestions */}
+                        {message.followUpSuggestions && message.followUpSuggestions.length > 0 && (
+                          <div className="ml-11 mt-6">
+                            <p className="text-sm font-semibold text-gray-700 mb-3">Suggested follow-up questions:</p>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                              {message.followUpSuggestions.map((suggestion, index) => (
+                                <Button
+                                  key={index}
+                                  variant="outline"
+                                  size="sm"
+                                  className="justify-start text-left h-auto py-2 px-3 rounded-2xl"
+                                  onClick={() => handleFollowUpClick(suggestion)}
+                                >
+                                  <span className="text-sm">{suggestion}</span>
+                                </Button>
+                              ))}
+                            </div>
+                          </div>
+                        )}
                       </div>
                     )}
                   </div>
                 ))}
 
                 {isLoading && (
-                  <div className="flex items-center justify-center py-8">
-                    <Card className="shadow-sm">
-                      <CardContent className="p-6">
-                        <div className="flex items-center space-x-4">
-                          <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
-                          <div>
-                            <p className="text-gray-900 font-semibold">Analyzing Medical Literature</p>
-                            <p className="text-gray-600 text-sm">
-                              Searching through latest research papers and clinical trials
-                            </p>
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
+                  <div className="flex items-center space-x-3">
+                    <div className="w-8 h-8 bg-green-600 rounded-2xl flex items-center justify-center">
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                    </div>
+                    <div>
+                      <p className="text-gray-900 font-semibold">Analyzing medical literature...</p>
+                      <p className="text-gray-600 text-sm">Searching through research papers and clinical trials</p>
+                    </div>
                   </div>
                 )}
               </div>
             </div>
-
-            {/* Enhanced Input Area */}
-            <div className="bg-white border-t border-gray-200 p-3 sm:p-4 md:p-6">
-              <div className="max-w-4xl mx-auto">
-                <div className="relative">
-                  <Textarea
-                    value={input}
-                    onChange={(e) => setInput(e.target.value)}
-                    onKeyPress={handleKeyPress}
-                    placeholder="Ask a clinical question or start a new evidence search..."
-                    className="w-full bg-gray-50 focus:bg-white focus:ring-2 focus:ring-blue-500 text-sm sm:text-base py-3 px-4 sm:px-6 rounded-2xl shadow-sm pr-24 sm:pr-32 transition-all resize-none min-h-[50px] max-h-[120px]"
-                    rows={2}
-                  />
-                  <div className="absolute right-2 bottom-2 flex items-center space-x-2">
-                    <VoiceInput 
-                      onTranscript={handleVoiceTranscript}
-                      disabled={isLoading}
-                    />
-                    <Button
-                      onClick={() => handleSendMessage()}
-                      disabled={!input.trim() || isLoading}
-                      className="bg-blue-600 hover:bg-blue-700 text-white rounded-xl px-3 sm:px-4 py-2"
-                    >
-                      <ChevronRight className="w-4 h-4" />
-                    </Button>
-                  </div>
-                </div>
-                <div className="flex items-center justify-between mt-3">
-                  <p className="text-xs text-gray-500">
-                    Press Enter to send • Powered by advanced medical AI • Always verify with clinical guidelines
-                  </p>
-                  <div className="flex items-center space-x-2 text-xs text-gray-500">
-                    <span>{input.length}/2000</span>
-                    {patientContext && (
-                      <Badge variant="outline" className="text-xs">
-                        Context Active
-                      </Badge>
-                    )}
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Enhanced Right Sidebar - Evidence Stack */}
-          <div className="hidden xl:flex w-80 bg-white border-l border-gray-200 flex-col">
-            <div className="px-6 py-4 bg-gradient-to-r from-gray-50 to-slate-50 border-b border-gray-200">
-              <div className="flex items-center justify-between">
-                <h3 className="text-lg font-bold text-gray-900">Evidence Stack</h3>
-                <Badge variant="outline" className="text-gray-600 font-medium">
-                  {mockStudies.length} Studies
-                </Badge>
-              </div>
-              <p className="text-gray-600 text-sm mt-1">Latest research findings</p>
-            </div>
-
-            <div className="flex-1 px-6 py-4 space-y-4 overflow-y-auto">
-              {mockStudies.map((study, index) => (
-                <Card key={study.id} className="hover:shadow-md cursor-pointer transition-all border-l-4 border-l-blue-200 hover:border-l-blue-500">
-                  <CardContent className="p-4">
-                    <button 
-                      className="text-left w-full" 
-                      onClick={() => window.open(study.citationUrl, "_blank")}
-                    >
-                      <h4 className="text-gray-900 font-semibold text-sm leading-tight mb-2">{study.title}</h4>
-                      <p className="text-gray-600 text-xs mb-3">{study.journal}</p>
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center space-x-2">
-                          <Badge
-                            className={`text-xs ${
-                              study.effectiveness === "effective"
-                                ? "bg-green-100 text-green-700"
-                                : "bg-amber-100 text-amber-700"
-                            }`}
-                          >
-                            {study.studyType}
-                          </Badge>
-                          <div className="flex items-center space-x-1">
-                            <Star className="w-3 h-3 text-yellow-500 fill-current" />
-                            <span className="text-xs text-gray-600">{study.qualityScore}</span>
-                          </div>
-                        </div>
-                        <span className="text-xs text-gray-500 font-medium">
-                          {new Date(study.date).getFullYear()}
-                        </span>
-                      </div>
-                      <div className="mt-2 text-xs text-gray-500">
-                        {study.sampleSize?.toLocaleString()} participants
-                      </div>
-                    </button>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-
-            {/* Quick Actions */}
-            <div className="px-6 py-4 border-t border-gray-200 bg-gray-50">
-              <div className="space-y-2">
-                <Button variant="outline" size="sm" className="w-full justify-start" onClick={handleExportChat}>
-                  <FileDown className="w-4 h-4 mr-2" />
-                  Export Evidence
-                </Button>
-                <Button variant="outline" size="sm" className="w-full justify-start" onClick={handleSaveConsultation}>
-                  <Bookmark className="w-4 h-4 mr-2" />
-                  Save Consultation
-                </Button>
-              </div>
-            </div>
-          </div>
+          )}
         </div>
-      </div>
-    </div>
+
+        {/* Floating Input Area - ChatGPT Style */}
+        {/* <div className="p-4">
+          <div className="max-w-3xl mx-auto">
+            <div className="relative flex items-end bg-white border border-gray-300 rounded-2xl shadow-sm"> */}
+              {/* <Textarea
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                onKeyPress={handleKeyPress}
+                placeholder="Ask anything"
+                className="flex-1 bg-transparent border-0 focus:ring-0 px-4 py-3 rounded-2xl resize-none min-h-[48px] max-h-[200px] focus:outline-none"
+                rows={1}
+              />
+              <div className="flex items-center space-x-2 pr-2 pb-2">
+                <VoiceInput 
+                  onTranscript={handleVoiceTranscript}
+                  disabled={isLoading}
+                />
+                <Button
+                  onClick={() => handleSendMessage()}
+                  disabled={!input.trim() || isLoading}
+                  size="sm"
+                  className="rounded-2xl w-8 h-8 p-0"
+                >
+                  <ChevronRight className="w-4 h-4" />
+                </Button>
+              </div> */}
+              <AIAssistantInterface/ >
+            {/* </div> */}
+            <p className="text-xs text-gray-500 text-center mt-2">
+              OpenEvidence can make mistakes. Check important info.
+            </p>
+          {/* </div>
+        </div> */}
+      </SidebarInset>
+    </SidebarProvider>
   )
 }

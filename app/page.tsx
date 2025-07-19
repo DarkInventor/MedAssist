@@ -1,5 +1,4 @@
 import { PhysicianAssistant } from "../components/physician-assistant"
-import { ComplianceFooter } from "../components/compliance-footer"
 
 export default function Home() {
   return (
@@ -7,7 +6,6 @@ export default function Home() {
       <div className="flex-1">
         <PhysicianAssistant />
       </div>
-      <ComplianceFooter />
     </div>
   )
 }

@@ -6,6 +6,42 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import type { VoiceRecognitionState } from "../types/medical"
 
+// Type definitions for Speech Recognition API
+interface SpeechRecognitionEvent extends Event {
+  resultIndex: number
+  results: SpeechRecognitionResultList
+}
+
+interface SpeechRecognitionErrorEvent extends Event {
+  error: string
+  message: string
+}
+
+interface SpeechRecognition extends EventTarget {
+  continuous: boolean
+  interimResults: boolean
+  lang: string
+  maxAlternatives: number
+  start(): void
+  stop(): void
+  abort(): void
+  onstart: ((this: SpeechRecognition, ev: Event) => any) | null
+  onend: ((this: SpeechRecognition, ev: Event) => any) | null
+  onresult: ((this: SpeechRecognition, ev: SpeechRecognitionEvent) => any) | null
+  onerror: ((this: SpeechRecognition, ev: SpeechRecognitionErrorEvent) => any) | null
+}
+
+interface SpeechRecognitionStatic {
+  new (): SpeechRecognition
+}
+
+declare global {
+  interface Window {
+    SpeechRecognition: SpeechRecognitionStatic
+    webkitSpeechRecognition: SpeechRecognitionStatic
+  }
+}
+
 interface VoiceInputProps {
   onTranscript: (text: string) => void
   disabled?: boolean
@@ -40,7 +76,7 @@ export function VoiceInput({ onTranscript, disabled = false }: VoiceInputProps) 
         }))
       }
 
-      recognition.onresult = (event) => {
+      recognition.onresult = (event: SpeechRecognitionEvent) => {
         const current = event.resultIndex
         const transcript = event.results[current][0].transcript
         const confidence = event.results[current][0].confidence
@@ -48,35 +84,32 @@ export function VoiceInput({ onTranscript, disabled = false }: VoiceInputProps) 
         setVoiceState(prev => ({
           ...prev,
           transcript,
-          confidence: confidence || 0.8
+          confidence,
         }))
 
-        // If final result, send to parent
-        if (event.results[current].isFinal) {
+        // Only call onTranscript if result is final and confidence is reasonable
+        if (event.results[current].isFinal && confidence > 0.7) {
           onTranscript(transcript)
           setVoiceState(prev => ({
             ...prev,
-            isListening: false,
             transcript: "",
-            confidence: 0
+            confidence: 0,
           }))
         }
       }
 
-      recognition.onerror = (event) => {
+      recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
         setVoiceState(prev => ({
           ...prev,
           isListening: false,
-          error: event.error,
-          transcript: "",
-          confidence: 0
+          error: `Speech recognition error: ${event.error}`,
         }))
       }
 
       recognition.onend = () => {
         setVoiceState(prev => ({
           ...prev,
-          isListening: false
+          isListening: false,
         }))
       }
 
@@ -119,84 +152,64 @@ export function VoiceInput({ onTranscript, disabled = false }: VoiceInputProps) 
 
   if (!isSupported) {
     return (
-      <div className="flex items-center space-x-2 text-gray-500">
+      <div className="flex items-center space-x-2 text-gray-400">
         <MicOff className="w-4 h-4" />
-        <span className="text-xs">Voice input not supported</span>
+        <span className="text-xs font-medium hidden sm:inline">Voice not supported</span>
       </div>
     )
   }
 
   return (
-    <div className="flex items-center space-x-2">
+    <div className="flex items-center space-x-3">
       <Button
-        variant={voiceState.isListening ? "default" : "ghost"}
+        variant="ghost"
         size="sm"
         onClick={toggleListening}
         disabled={disabled}
-        className={`${
+        className={`rounded-full w-10 h-10 flex items-center justify-center transition-all duration-200 ${
           voiceState.isListening 
-            ? "bg-red-600 hover:bg-red-700 text-white animate-pulse" 
-            : "text-gray-600 hover:bg-gray-100"
-        } transition-all duration-200`}
+            ? "bg-red-100 hover:bg-red-200 text-red-600 animate-pulse" 
+            : "text-gray-500 hover:bg-gray-100"
+        }`}
       >
         {voiceState.isListening ? (
           <Mic className="w-4 h-4" />
         ) : (
-          <MicOff className="w-4 h-4" />
+          <Mic className="w-4 h-4" />
         )}
-        <span className="ml-2 text-xs hidden sm:inline">
-          {voiceState.isListening ? "Listening..." : "Voice"}
-        </span>
       </Button>
 
       {voiceState.isListening && (
-        <div className="flex items-center space-x-2">
+        <div className="flex items-center space-x-3">
           <div className="flex space-x-1">
-            <div className="w-1 h-4 bg-red-400 rounded animate-pulse" style={{ animationDelay: '0ms' }}></div>
-            <div className="w-1 h-4 bg-red-400 rounded animate-pulse" style={{ animationDelay: '150ms' }}></div>
-            <div className="w-1 h-4 bg-red-400 rounded animate-pulse" style={{ animationDelay: '300ms' }}></div>
+            <div className="w-1 h-6 bg-red-400 rounded-full animate-pulse" style={{ animationDelay: '0ms' }}></div>
+            <div className="w-1 h-6 bg-red-400 rounded-full animate-pulse" style={{ animationDelay: '150ms' }}></div>
+            <div className="w-1 h-6 bg-red-400 rounded-full animate-pulse" style={{ animationDelay: '300ms' }}></div>
           </div>
-          <Volume2 className="w-3 h-3 text-red-600 animate-pulse" />
+          <Volume2 className="w-4 h-4 text-red-600 animate-pulse" />
         </div>
       )}
 
       {voiceState.transcript && (
         <div className="flex items-center space-x-2">
-          <Badge variant="outline" className="bg-blue-50 text-blue-800 text-xs">
+          <Badge variant="outline" className="bg-blue-50/70 text-blue-800 text-xs rounded-full px-3 py-1 font-medium">
             {Math.round(voiceState.confidence * 100)}% confidence
           </Badge>
         </div>
       )}
 
       {voiceState.error && (
-        <div className="flex items-center space-x-1 text-red-600">
+        <div className="flex items-center space-x-2 text-red-600">
           <AlertCircle className="w-4 h-4" />
-          <span className="text-xs">Voice error</span>
+          <span className="text-xs font-medium">{voiceState.error}</span>
         </div>
       )}
 
-      {voiceState.transcript && voiceState.isListening && (
-        <div className="absolute bottom-full left-0 right-0 mb-2 p-3 bg-white border border-gray-200 rounded-lg shadow-lg">
-          <div className="flex items-center space-x-2 mb-2">
-            <Mic className="w-4 h-4 text-red-600" />
-            <span className="text-sm font-medium text-gray-900">Listening...</span>
-            <Badge variant="outline" className="bg-blue-50 text-blue-800 text-xs">
-              {Math.round(voiceState.confidence * 100)}%
-            </Badge>
-          </div>
-          <p className="text-gray-700 text-sm italic">
-            "{voiceState.transcript}"
-          </p>
+      {voiceState.transcript && (
+        <div className="bg-gray-50 rounded-full px-4 py-2 max-w-xs">
+          <p className="text-sm text-gray-700 truncate font-medium">{voiceState.transcript}</p>
         </div>
       )}
     </div>
   )
-}
-
-// Type augmentation for Speech Recognition API
-declare global {
-  interface Window {
-    SpeechRecognition: typeof SpeechRecognition
-    webkitSpeechRecognition: typeof SpeechRecognition
-  }
 }
