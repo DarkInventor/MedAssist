@@ -85,8 +85,9 @@ import type {
   FilterOptions,
   SearchHistoryItem,
   PatientContext,
-} from "../types/medical";
+  } from "../types/medical";
 import { AIAssistantInterface } from "./ai-assistant-interface";
+
 
 // Enhanced mock data with more comprehensive information
 const mockPhysician: PhysicianProfile = {
@@ -107,6 +108,7 @@ const mockPhysician: PhysicianProfile = {
       studyType: "all",
       region: "all",
       publicationStatus: "peer-reviewed",
+      minQualityScore: 0,
       includePreprints: false,
     },
   },
@@ -636,6 +638,7 @@ export function PhysicianAssistant() {
     studyType: "all",
     region: "all",
     publicationStatus: "peer-reviewed",
+    minQualityScore: 0,
     includePreprints: false,
   });
   const [patientContext, setPatientContext] = useState<PatientContext | null>(
@@ -647,6 +650,69 @@ export function PhysicianAssistant() {
     SavedConsultation[]
   >(mockSavedConsultations);
   const [activeTab, setActiveTab] = useState("new-search");
+
+  // Listen for events from AI Assistant Interface
+  useEffect(() => {
+    const handleMedicalQueryResult = (event: Event) => {
+      const customEvent = event as CustomEvent;
+      const { query, response } = customEvent.detail;
+      
+      // Add user message
+      const userMessage: ChatMessage = {
+        id: Date.now().toString(),
+        role: "user",
+        content: query,
+        timestamp: new Date(),
+      };
+
+             // Convert API response to UI format
+      const aiMessage: ChatMessage = {
+        id: (Date.now() + 1).toString(),
+        role: "assistant",
+        content: response.summary || "Based on the latest medical literature and your query, here are the most relevant findings:",
+        timestamp: new Date(),
+        studies: response.sources?.map((source: any, index: number) => ({
+          id: source.pmid || source.doi || `event-${Date.now()}-${index}`,
+          title: source.title,
+          authors: source.authors?.join(', ') || 'Unknown authors',
+          journal: source.journal,
+          year: source.year,
+          doi: source.doi,
+          pmid: source.pmid,
+          url: source.url || (source.pmid ? `https://pubmed.ncbi.nlm.nih.gov/${source.pmid}/` : null) || (source.doi ? `https://doi.org/${source.doi}` : null),
+          abstract: source.abstract,
+          studyType: source.studyType,
+          findings: response.keyFindings || [],
+          methodology: source.studyType,
+          sampleSize: "N/A",
+          significance: "See full study",
+          relevanceScore: source.relevanceScore || 0.8,
+          canadianRelevance: filters.region === 'North America' ? 'High' : 'Moderate'
+        })) || [],
+        followUpSuggestions: response.followUpSuggestions || [
+          "Are there any contraindications?",
+          "What are the recommended protocols?",
+          "How does this compare to standard treatments?",
+          "Any recent safety updates?",
+        ],
+      };
+
+      setMessages((prev) => [...prev, userMessage, aiMessage]);
+      
+      // Add to search history
+      const newSearchItem: SearchHistoryItem = {
+        id: Date.now().toString(),
+        query: query,
+        timestamp: new Date(),
+        resultCount: response.sources?.length || 0,
+        specialty: userProfile?.specialty || 'General Practitioner',
+      };
+      setSearchHistory((prev) => [newSearchItem, ...prev.slice(0, 9)]);
+    };
+
+    window.addEventListener('medicalQueryResult', handleMedicalQueryResult);
+    return () => window.removeEventListener('medicalQueryResult', handleMedicalQueryResult);
+  }, [filters.region, userProfile?.specialty]);
 
   // Authentication functions
   const handleLogout = async () => {
@@ -706,25 +772,94 @@ export function PhysicianAssistant() {
     };
     setSearchHistory((prev) => [newSearchItem, ...prev.slice(0, 9)]);
 
-    // Simulate AI response with enhanced features
-    setTimeout(() => {
+    try {
+      // Call the medical research API
+      const requestBody = {
+        query: finalInput,
+        patientContext: patientContext ? JSON.stringify(patientContext) : undefined,
+        filters: {
+          searchEnabled: true,
+          deepResearchEnabled: true,
+          reasonEnabled: true,
+          dateRange: filters.dateRange,
+          studyType: filters.studyType,
+          region: filters.region
+        }
+      };
+
+      const response = await fetch('/api/medical-research', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(requestBody),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+
+      // Convert API response to match existing UI format
       const aiMessage: ChatMessage = {
         id: (Date.now() + 1).toString(),
         role: "assistant",
-        content:
-          "Based on the latest medical literature and your query, here are the most relevant findings:",
+        content: data.summary || "Based on the latest medical literature and your query, here are the most relevant findings:",
         timestamp: new Date(),
-        studies: mockStudies.slice(0, 2), // Show relevant studies
-        followUpSuggestions: [
+        studies: data.sources?.map((source: any, index: number) => ({
+          id: source.pmid || source.doi || `api-${Date.now()}-${index}`,
+          title: source.title,
+          authors: source.authors?.join(', ') || 'Unknown authors',
+          journal: source.journal,
+          year: source.year,
+          doi: source.doi,
+          pmid: source.pmid,
+          url: source.url || (source.pmid ? `https://pubmed.ncbi.nlm.nih.gov/${source.pmid}/` : null) || (source.doi ? `https://doi.org/${source.doi}` : null),
+          abstract: source.abstract,
+          studyType: source.studyType,
+          findings: data.keyFindings || [],
+          methodology: source.studyType,
+          sampleSize: "N/A", // Could be extracted from abstract if needed
+          significance: "See full study",
+          relevanceScore: source.relevanceScore || 0.8,
+          canadianRelevance: filters.region === 'North America' ? 'High' : 'Moderate'
+        })) || mockStudies.slice(0, 2),
+        followUpSuggestions: data.followUpSuggestions || [
           "Are there any contraindications?",
           "What are the recommended protocols?",
           "How does this compare to standard treatments?",
           "Any recent safety updates?",
         ],
       };
+
       setMessages((prev) => [...prev, aiMessage]);
+      
+      // Update search history with result count
+      setSearchHistory((prev) => prev.map((item, index) => 
+        index === 0 ? { ...item, resultCount: data.sources?.length || 0 } : item
+      ));
+
+    } catch (error) {
+      console.error('Error fetching medical research:', error);
+      
+      // Fallback to error message
+      const errorMessage: ChatMessage = {
+        id: (Date.now() + 1).toString(),
+        role: "assistant",
+        content: "I apologize, but I encountered an error while searching the medical literature. Please try rephrasing your question or check your internet connection.",
+        timestamp: new Date(),
+        studies: [],
+        followUpSuggestions: [
+          "Try rephrasing your question",
+          "Check if your question is medical-related",
+          "Ensure you have a stable internet connection"
+        ],
+      };
+      setMessages((prev) => [...prev, errorMessage]);
+    } finally {
       setIsLoading(false);
-    }, 2000);
+    }
   };
 
   const handleVoiceTranscript = (transcript: string) => {
@@ -879,7 +1014,7 @@ export function PhysicianAssistant() {
                         <button
                           className="text-left w-full"
                           onClick={() =>
-                            window.open(study.citationUrl, "_blank")
+                            window.open(study.url || study.citationUrl, "_blank")
                           }
                         >
                           <h4 className="text-gray-900 font-semibold text-sm leading-tight mb-3">
@@ -907,7 +1042,7 @@ export function PhysicianAssistant() {
                               </div>
                             </div>
                             <span className="text-xs text-gray-500 font-medium">
-                              {new Date(study.date).getFullYear()}
+                              {study.date ? new Date(study.date).getFullYear() : study.year || 'N/A'}
                             </span>
                           </div>
                           <p className="text-xs text-gray-700 mb-3">
@@ -1096,17 +1231,66 @@ export function PhysicianAssistant() {
                                         {study.title}
                                       </h4>
                                       <p className="text-gray-600 text-sm mt-1">
+                                        {study.authors && (
+                                          <span>{study.authors} • </span>
+                                        )}
                                         {study.journal}
+                                        {study.year && (
+                                          <span> • {study.year}</span>
+                                        )}
                                       </p>
-                                      <div className="flex items-center space-x-4 mt-2 text-xs text-gray-500">
+                                      
+                                                                             {/* Study Abstract/Summary - Always show, use AI when abstract missing */}
+                                       <div className="mt-3 p-3 bg-gray-50 rounded-xl border border-gray-200">
+                                         <h5 className="text-sm font-semibold text-gray-900 mb-2">
+                                           {study.abstract ? 'Study Summary' : 'AI-Enhanced Summary'}
+                                         </h5>
+                                         <p className="text-sm text-gray-700 leading-relaxed">
+                                           {study.abstract ? (
+                                             study.abstract.length > 300 
+                                               ? `${study.abstract.substring(0, 300)}...` 
+                                               : study.abstract
+                                           ) : (
+                                             `AI Summary: This ${study.studyType?.toLowerCase() || 'study'} examines ${study.title?.toLowerCase()}. Published in ${study.journal} (${study.year}), this research contributes to the evidence base on the topic. Full abstract may be available through the direct study link.`
+                                           )}
+                                         </p>
+                                                                                     {study.abstract && study.abstract.length > 300 && (
+                                             <button 
+                                               className="text-blue-600 text-xs mt-2 hover:text-blue-800"
+                                               onClick={() => {
+                                                 // Toggle full abstract display
+                                                 const element = document.getElementById(`abstract-${study.id}`);
+                                                 if (element) {
+                                                   element.style.display = element.style.display === 'none' ? 'block' : 'none';
+                                                 }
+                                               }}
+                                             >
+                                               Read full abstract
+                                             </button>
+                                           )}
+                                           {study.abstract && study.abstract.length > 300 && (
+                                             <div id={`abstract-${study.id}`} style={{display: 'none'}} className="mt-2">
+                                               <p className="text-sm text-gray-700 leading-relaxed">
+                                                 {study.abstract}
+                                               </p>
+                                             </div>
+                                           )}
+                                         </div>
+
+                                      <div className="flex items-center space-x-4 mt-3 text-xs text-gray-500">
                                         <span>
-                                          {study.sampleSize?.toLocaleString()}{" "}
-                                          participants
+                                          {study.sampleSize?.toLocaleString && typeof study.sampleSize === 'number' 
+                                            ? `${study.sampleSize.toLocaleString()} participants`
+                                            : study.sampleSize ? `${study.sampleSize}` : 'Sample size: N/A'
+                                          }
                                         </span>
-                                        <span>
-                                          Quality: {study.qualityScore}/10
-                                        </span>
+                                        {study.qualityScore && (
+                                          <span>Quality: {study.qualityScore}/10</span>
+                                        )}
                                         <span>{study.studyType}</span>
+                                        {study.pmid && (
+                                          <span>PMID: {study.pmid}</span>
+                                        )}
                                       </div>
                                     </div>
                                   </div>
@@ -1139,9 +1323,14 @@ export function PhysicianAssistant() {
                                       variant="ghost"
                                       size="sm"
                                       className="text-blue-600 hover:bg-blue-50 rounded-2xl"
-                                      onClick={() =>
-                                        window.open(study.citationUrl, "_blank")
-                                      }
+                                      onClick={() => {
+                                        const url = study.url || study.citationUrl;
+                                        if (url) {
+                                          window.open(url, "_blank");
+                                        } else {
+                                          alert("No direct link available for this study. Try searching for the title on PubMed or Google Scholar.");
+                                        }
+                                      }}
                                     >
                                       <ExternalLink className="w-3 h-3 mr-1" />
                                       View Study

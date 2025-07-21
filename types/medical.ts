@@ -1,20 +1,30 @@
 export interface StudySummary {
   id: string
   title: string
-  date: string
+  date?: string
   journal: string
   abstract: string
-  verdict: string
-  effectiveness: "effective" | "not-effective" | "mixed"
-  safety: "safe" | "caution" | "unsafe"
-  targetPopulation: string
-  citationUrl: string
-  studyType: "RCT" | "Meta-analysis" | "Cohort" | "Case Study" | "Systematic Review"
-  region: string
+  verdict?: string
+  effectiveness?: "effective" | "not-effective" | "mixed"
+  safety?: "safe" | "caution" | "unsafe"
+  targetPopulation?: string
+  citationUrl?: string
+  url?: string  // URL to the full study
+  authors?: string  // Authors list as string
+  year?: number | string  // Publication year
+  doi?: string  // DOI identifier
+  pmid?: string  // PubMed ID
+  studyType: "RCT" | "Meta-analysis" | "Cohort" | "Case Study" | "Systematic Review" | string
+  region?: string
   keyTakeaway?: string
   qualityScore?: number
-  sampleSize?: number
-  publicationStatus: "peer-reviewed" | "preprint" | "conference"
+  sampleSize?: number | string
+  publicationStatus?: "peer-reviewed" | "preprint" | "conference"
+  findings?: string[]  // Key findings from the study
+  methodology?: string  // Study methodology
+  significance?: string  // Statistical significance
+  relevanceScore?: number  // Relevance to the query
+  canadianRelevance?: string  // Relevance to Canadian healthcare
 }
 
 export interface ChatMessage {
@@ -77,20 +87,21 @@ export interface VoiceRecognitionState {
 
 export interface FilterOptions {
   dateRange: "last-year" | "last-2-years" | "last-5-years" | "all"
-  studyType: "all" | "RCT" | "Meta-analysis" | "Cohort" | "Case Study" | "Systematic Review"
-  region: "all" | "North America" | "Europe" | "Asia" | "Global"
+  studyType: "all" | "RCT" | "Meta-analysis" | "Cohort" | "Case Study" | "Systematic Review" | "Clinical Trial" | "Observational Study"
+  region: "all" | "North America" | "Europe" | "Asia" | "Global" | "Canada"
   publicationStatus: "all" | "peer-reviewed" | "preprint"
-  minQualityScore?: number
+  minQualityScore?: number // 0-10 scale
   includePreprints: boolean
 }
 
 export interface PatientContext {
-  age?: string
-  gender?: string
+  ageRange?: "18-30" | "31-45" | "46-60" | "61-75" | "75+" | string
+  gender?: "male" | "female" | "other" | "not-specified"
   conditions?: string[]
   medications?: string[]
   allergies?: string[]
   isAnonymized: boolean
+  additionalNotes?: string
 }
 
 export interface DataSource {

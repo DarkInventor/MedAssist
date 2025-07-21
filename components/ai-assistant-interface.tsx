@@ -14,6 +14,7 @@ import {
   PenTool,
   BrainCircuit,
   Sparkles,
+  Loader2,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useSidebar } from "@/components/ui/sidebar";
@@ -23,48 +24,62 @@ export function AIAssistantInterface() {
   const [searchEnabled, setSearchEnabled] = useState(false);
   const [deepResearchEnabled, setDeepResearchEnabled] = useState(false);
   const [reasonEnabled, setReasonEnabled] = useState(false);
-  const [uploadedFiles, setUploadedFiles] = useState<string[]>([]);
+  const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
   const [showUploadAnimation, setShowUploadAnimation] = useState(false);
   const [activeCommandCategory, setActiveCommandCategory] = useState<
     string | null
   >(null);
+  const [patientContext, setPatientContext] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   
   const { state, isMobile } = useSidebar();
 
   const commandSuggestions = {
     learn: [
-      "Explain the Big Bang theory",
-      "How does photosynthesis work?",
-      "What are black holes?",
-      "Explain quantum computing",
-      "How does the human brain work?",
+      "What are the current treatments for hypertension?",
+      "How does diabetes mellitus type 2 develop?",
+      "What are the symptoms of myocardial infarction?",
+      "Explain the mechanism of action of ACE inhibitors",
+      "What are the risk factors for stroke?",
     ],
     code: [
-      "Create a React component for a todo list",
-      "Write a Python function to sort a list",
-      "How to implement authentication in Next.js",
-      "Explain async/await in JavaScript",
-      "Create a CSS animation for a button",
+      "What are the latest CPSO guidelines for telemedicine?",
+      "Compare effectiveness of statins vs lifestyle changes",
+      "What are the contraindications for beta-blockers?",
+      "Explain the Canadian guidelines for managing COPD",
+      "What are the current vaccination schedules in Canada?",
     ],
     write: [
-      "Write a professional email to a client",
-      "Create a product description for a smartphone",
-      "Draft a blog post about AI",
-      "Write a creative story about space exploration",
-      "Create a social media post about sustainability",
+      "What are the differential diagnoses for chest pain?",
+      "How to diagnose and treat community-acquired pneumonia?",
+      "What are the drug interactions with warfarin?",
+      "Explain the PHIPA requirements for patient data",
+      "What are the latest updates on COVID-19 treatment?",
     ],
   };
 
   const handleUploadFile = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleFileSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = event.target.files;
+    if (!files || files.length === 0) return;
+
+    const filesArray = Array.from(files);
     setShowUploadAnimation(true);
 
-    // Simulate file upload with timeout
+    // Simulate upload delay (in real app, this would be actual upload logic)
     setTimeout(() => {
-      const newFile = `Document.pdf`;
-      setUploadedFiles((prev) => [...prev, newFile]);
+      setUploadedFiles(prev => [...prev, ...filesArray]);
       setShowUploadAnimation(false);
     }, 1500);
+
+    // Reset the file input
+    if (event.target) {
+      event.target.value = '';
+    }
   };
 
   const handleCommandSelect = (command: string) => {
@@ -76,10 +91,85 @@ export function AIAssistantInterface() {
     }
   };
 
-  const handleSendMessage = () => {
-    if (inputValue.trim()) {
-      console.log("Sending message:", inputValue);
-      setInputValue("");
+  const [isLoading, setIsLoading] = useState(false);
+
+  const handleSendMessage = async () => {
+    if (!inputValue.trim() || isLoading) return;
+
+    const currentQuery = inputValue;
+    setInputValue("");
+    setIsLoading(true);
+
+    try {
+      // Read file contents for uploaded files
+      const fileContents = await Promise.all(
+        uploadedFiles.map(async (file) => {
+          const text = await file.text();
+          return { name: file.name, content: text };
+        })
+      );
+
+      const requestBody = {
+        query: currentQuery,
+        patientContext: patientContext || undefined,
+        uploadedFiles: fileContents,
+        filters: {
+          searchEnabled,
+          deepResearchEnabled,
+          reasonEnabled,
+          dateRange: "last-2-years",
+          studyType: "all",
+          region: "canada"
+        }
+      };
+
+      const response = await fetch('/api/medical-research', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(requestBody),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      
+      // Emit event to the main physician interface to display results
+      window.dispatchEvent(new CustomEvent('medicalQueryResult', {
+        detail: {
+          query: currentQuery,
+          response: data
+        }
+      }));
+
+    } catch (error) {
+      console.error('Error fetching medical research:', error);
+      
+      // Emit error event
+      window.dispatchEvent(new CustomEvent('medicalQueryResult', {
+        detail: {
+          query: currentQuery,
+          response: {
+            summary: 'Sorry, there was an error processing your medical query. Please try again.',
+            keyFindings: [],
+            clinicalRecommendations: [],
+            sources: [],
+            citations: [],
+            followUpSuggestions: [
+              'Try rephrasing your question',
+              'Check if your question is medical-related',
+              'Ensure you have a stable internet connection'
+            ],
+            confidence: 0.0,
+            lastUpdated: new Date().toISOString()
+          }
+        }
+      }));
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -92,16 +182,36 @@ export function AIAssistantInterface() {
           <div className="w-full flex flex-col items-center">
       
 
+        {/* Patient Context Input */}
+        {patientContext && (
+          <div className="w-full bg-blue-50 border border-blue-200 rounded-[1rem] overflow-hidden mb-3">
+            <div className="p-3">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-sm font-medium text-blue-800">Patient Context</span>
+                <button
+                  onClick={() => setPatientContext("")}
+                  className="text-blue-600 hover:text-blue-800 text-sm"
+                >
+                  Clear
+                </button>
+              </div>
+              <p className="text-sm text-blue-700">{patientContext}</p>
+            </div>
+          </div>
+        )}
+
         {/* Input area with integrated functions and file upload */}
         <div className="w-full bg-white border border-gray-200 rounded-[1rem] overflow-hidden mb-3">
           <div className="p-4">
             <input
               ref={inputRef}
               type="text"
-              placeholder="Ask me anything..."
+              placeholder="Ask me about medical conditions, treatments, guidelines..."
               value={inputValue}
               onChange={(e) => setInputValue(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && handleSendMessage()}
               className="w-full text-gray-700 text-base outline-none focus:outline-none focus:ring-0 placeholder:text-gray-400 bg-transparent"
+              disabled={isLoading}
             />
           </div>
 
@@ -115,7 +225,7 @@ export function AIAssistantInterface() {
                     className="flex items-center gap-2 bg-gray-50 py-1 px-2 rounded-md border border-gray-200"
                   >
                     <FileText className="w-3 h-3 text-blue-600" />
-                    <span className="text-xs text-gray-700">{file}</span>
+                    <span className="text-xs text-gray-700">{file.name}</span>
                     <button
                       onClick={() =>
                         setUploadedFiles((prev) =>
@@ -210,65 +320,91 @@ export function AIAssistantInterface() {
               </button>
               <button
                 onClick={handleSendMessage}
-                disabled={!inputValue.trim()}
+                disabled={!inputValue.trim() || isLoading}
                 className={`w-8 h-8 flex items-center justify-center rounded-full transition-colors ${
-                  inputValue.trim()
+                  inputValue.trim() && !isLoading
                     ? "bg-blue-600 text-white hover:bg-blue-700"
                     : "bg-gray-100 text-gray-400 cursor-not-allowed"
                 }`}
               >
-                <ArrowUp className="w-4 h-4" />
+                {isLoading ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <ArrowUp className="w-4 h-4" />
+                )}
               </button>
             </div>
           </div>
 
-          {/* Upload files */}
-          <div className="px-4 py-2 border-t border-gray-100">
-            <button
-              onClick={handleUploadFile}
-              className="flex items-center gap-2 text-gray-600 text-sm hover:text-gray-900 transition-colors"
-            >
-              {showUploadAnimation ? (
-                <motion.div
-                  className="flex space-x-1"
-                  initial="hidden"
-                  animate="visible"
-                  variants={{
-                    hidden: {},
-                    visible: {
-                      transition: {
-                        staggerChildren: 0.1,
-                      },
-                    },
-                  }}
-                >
-                  {[...Array(3)].map((_, i) => (
-                    <motion.div
-                      key={i}
-                      className="w-1.5 h-1.5 bg-blue-600 rounded-full"
-                      variants={{
-                        hidden: { opacity: 0, y: 5 },
-                        visible: {
-                          opacity: 1,
-                          y: 0,
-                          transition: {
-                            duration: 0.4,
-                            repeat: Infinity,
-                            repeatType: "mirror",
-                            delay: i * 0.1,
-                          },
+          {/* Upload files and Patient Context */}
+          <div className="px-4 py-2 border-t border-gray-100 space-y-2">
+            <input
+              ref={fileInputRef}
+              type="file"
+              multiple
+              className="hidden"
+              onChange={handleFileSelect}
+              accept="*/*"
+            />
+            <div className="flex items-center justify-between">
+              <button
+                onClick={handleUploadFile}
+                className="flex items-center gap-2 text-gray-600 text-sm hover:text-gray-900 transition-colors"
+              >
+                {showUploadAnimation ? (
+                  <motion.div
+                    className="flex space-x-1"
+                    initial="hidden"
+                    animate="visible"
+                    variants={{
+                      hidden: {},
+                      visible: {
+                        transition: {
+                          staggerChildren: 0.1,
                         },
-                      }}
-                    />
-                  ))}
-                </motion.div>
-              ) : (
-                <Plus className="w-4 h-4" />
-              )}
-              <span>Upload Files</span>
-            </button>
+                      },
+                    }}
+                  >
+                    {[...Array(3)].map((_, i) => (
+                      <motion.div
+                        key={i}
+                        className="w-1.5 h-1.5 bg-blue-600 rounded-full"
+                        variants={{
+                          hidden: { opacity: 0, y: 5 },
+                          visible: {
+                            opacity: 1,
+                            y: 0,
+                            transition: {
+                              duration: 0.4,
+                              repeat: Infinity,
+                              repeatType: "mirror",
+                              delay: i * 0.1,
+                            },
+                          },
+                        }}
+                      />
+                    ))}
+                  </motion.div>
+                ) : (
+                  <Plus className="w-4 h-4" />
+                )}
+                <span>Upload Files</span>
+              </button>
+              <button
+                onClick={() => {
+                  const context = prompt("Enter patient context (age, conditions, medications, etc.):");
+                  if (context) setPatientContext(context);
+                }}
+                className="flex items-center gap-2 text-gray-600 text-sm hover:text-gray-900 transition-colors"
+              >
+                <FileText className="w-4 h-4" />
+                <span>Add Patient Context</span>
+              </button>
+            </div>
           </div>
         </div>
+
+        {/* Medical responses are now handled in the main physician assistant UI */}
 
         {/* Command categories */}
         {/* <div className="w-full grid grid-cols-3 gap-4 mb-4">
@@ -317,10 +453,10 @@ export function AIAssistantInterface() {
                 <div className="p-3 border-b border-gray-100">
                   <h3 className="text-sm font-medium text-gray-700">
                     {activeCommandCategory === "learn"
-                      ? "Learning suggestions"
+                      ? "Clinical Learning"
                       : activeCommandCategory === "code"
-                      ? "Coding suggestions"
-                      : "Writing suggestions"}
+                      ? "Guidelines & Protocols"
+                      : "Diagnostic & Treatment"}
                   </h3>
                 </div>
                 <ul className="divide-y divide-gray-100">
