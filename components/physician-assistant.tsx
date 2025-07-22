@@ -606,30 +606,7 @@ function AppSidebar({
 
 export function PhysicianAssistant() {
   const { currentUser, userProfile, loading, logout } = useAuth();
-  const [messages, setMessages] = useState<ChatMessage[]>([
-    {
-      id: "1",
-      role: "user",
-      content:
-        "Is there evidence for intermittent fasting in managing hypertension?",
-      timestamp: new Date(),
-    },
-    {
-      id: "2",
-      role: "assistant",
-      content:
-        "Certainly, here is some evidence related to intermittent fasting for managing hypertension:",
-      timestamp: new Date(),
-      studies: mockStudies,
-      followUpSuggestions: [
-        "Any major side effects?",
-        "What about patients on beta-blockers?",
-        "Optimal fasting schedules for hypertension?",
-        "Comparison with DASH diet effectiveness?",
-      ],
-    },
-  ]);
-
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [evidenceStackOpen, setEvidenceStackOpen] = useState(false);
@@ -644,11 +621,8 @@ export function PhysicianAssistant() {
   const [patientContext, setPatientContext] = useState<PatientContext | null>(
     null
   );
-  const [searchHistory, setSearchHistory] =
-    useState<SearchHistoryItem[]>(mockSearchHistory);
-  const [savedConsultations, setSavedConsultations] = useState<
-    SavedConsultation[]
-  >(mockSavedConsultations);
+  const [searchHistory, setSearchHistory] = useState<SearchHistoryItem[]>([]);
+  const [savedConsultations, setSavedConsultations] = useState<SavedConsultation[]>([]);
   const [activeTab, setActiveTab] = useState("new-search");
 
   // Listen for events from AI Assistant Interface
@@ -1208,7 +1182,7 @@ export function PhysicianAssistant() {
                           <div className="ml-11 space-y-6">
                             {message.studies.map((study, index) => (
                               <div
-                                key={study.id}
+                                key={`${study.id}-${index}`}
                                 className="border border-gray-200 rounded-2xl p-4"
                               >
                                 <div className="flex items-start justify-between mb-3">
@@ -1351,33 +1325,27 @@ export function PhysicianAssistant() {
                         )}
 
                         {/* Follow-up Suggestions */}
-                        {message.followUpSuggestions &&
-                          message.followUpSuggestions.length > 0 && (
-                            <div className="ml-11 mt-6">
-                              <p className="text-sm font-semibold text-gray-700 mb-3">
-                                Suggested follow-up questions:
-                              </p>
-                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                                {message.followUpSuggestions.map(
-                                  (suggestion, index) => (
-                                    <Button
-                                      key={index}
-                                      variant="outline"
-                                      size="sm"
-                                      className="justify-start text-left h-auto py-2 px-3 rounded-2xl"
-                                      onClick={() =>
-                                        handleFollowUpClick(suggestion)
-                                      }
-                                    >
-                                      <span className="text-sm">
-                                        {suggestion}
-                                      </span>
-                                    </Button>
-                                  )
-                                )}
-                              </div>
+                        {(message.followUpSuggestions ?? []).length > 0 && (
+                          <div className="ml-11 mt-6 pb-28">
+                            <p className="text-sm font-semibold text-gray-700 mb-3">
+                              Suggested follow-up questions:
+                            </p>
+                            <div className="flex flex-wrap gap-2">
+                              {(message.followUpSuggestions ?? []).map((suggestion, index) => (
+                                <Button
+                                  key={index}
+                                  variant="outline"
+                                  size="sm"
+                                  className="justify-start text-left h-auto py-2 px-3 rounded-2xl whitespace-normal break-words max-w-full"
+                                  style={{ minWidth: '200px', maxWidth: '100%' }}
+                                  onClick={() => handleFollowUpClick(suggestion)}
+                                >
+                                  <span className="text-sm break-words whitespace-normal">{suggestion}</span>
+                                </Button>
+                              ))}
                             </div>
-                          )}
+                          </div>
+                        )}
                       </div>
                     )}
                   </div>
